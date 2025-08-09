@@ -53,3 +53,6 @@ MIGRATION_V*.md
 
 # RBAC (removed)
 rbac.json
+
+# Landing page (not for GitHub)
+landing-page/
