@@ -332,7 +332,7 @@ npm run dev
 
 ## 📄 License
 
-MIT © 2024 Kratos MCP Contributors
+MIT © 2025 Kratos MCP Contributors
 
 ## 🙏 Acknowledgments
 
