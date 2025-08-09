@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-kratos-light text-kratos-black;
+    background-image: linear-gradient(to right, #e5e5e5 1px, transparent 1px),
+                      linear-gradient(to bottom, #e5e5e5 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}

@@ -1,0 +1,412 @@
+import Database from 'better-sqlite3';
+import path from 'path';
+import fs from 'fs-extra';
+import crypto from 'crypto';
+import { MCPLogger as Logger } from '../utils/mcp-logger.js';
+
+const logger = new Logger('MemoryDB');
+
+export interface Memory {
+  id: string;
+  project_id: string;
+  summary: string;
+  text: string;
+  tags: string[];
+  paths: string[];
+  importance: number;
+  created_at: number;
+  updated_at: number;
+  ttl?: number;
+  expires_at?: number;
+}
+
+export interface SearchResult {
+  memory: Memory;
+  score: number;
+  snippet?: string;
+}
+
+export class MemoryDatabase {
+  private db: Database.Database;
+  private projectId: string;
+  private projectRoot: string;
+
+  constructor(projectRoot: string, projectId: string) {
+    this.projectRoot = projectRoot;
+    this.projectId = projectId;
+    
+    // CRITICAL: Each project gets COMPLETELY ISOLATED database
+    // Path: ~/.kratos/projects/{project_id}/databases/memories.db
+    // This ensures NO cross-contamination between projects
+    const kratosHome = path.join(process.env.HOME || process.env.USERPROFILE || '', '.kratos');
+    const dbPath = path.join(kratosHome, 'projects', projectId, 'databases', 'memories.db');
+    fs.ensureDirSync(path.dirname(dbPath));
+    
+    this.db = new Database(dbPath);
+    this.db.pragma('journal_mode = WAL');
+    this.db.pragma('foreign_keys = ON');
+    
+    this.initializeSchema();
+    this.setupTriggers();
+    logger.info(`Memory database ISOLATED for project: ${projectId} at ${dbPath}`);
+  }
+
+  private initializeSchema() {
+    // Main memories table
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS memories (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        text TEXT NOT NULL,
+        tags TEXT DEFAULT '[]',
+        paths TEXT DEFAULT '[]',
+        importance INTEGER DEFAULT 3 CHECK(importance >= 1 AND importance <= 5),
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        ttl INTEGER,
+        expires_at INTEGER,
+        dedupe_hash TEXT
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_mem_project ON memories(project_id);
+      CREATE INDEX IF NOT EXISTS idx_mem_expires ON memories(expires_at) WHERE expires_at IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_mem_importance ON memories(importance DESC, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_mem_dedupe ON memories(dedupe_hash);
+    `);
+
+    // Full-text search virtual table - INCLUDING TAGS for better search
+    this.db.exec(`
+      CREATE VIRTUAL TABLE IF NOT EXISTS mem_fts USING fts5(
+        summary, 
+        text,
+        tags,
+        content='memories', 
+        content_rowid='rowid',
+        tokenize='porter unicode61'
+      );
+
+      -- Triggers to keep FTS in sync - now including tags
+      CREATE TRIGGER IF NOT EXISTS mem_fts_insert AFTER INSERT ON memories BEGIN
+        INSERT INTO mem_fts(rowid, summary, text, tags) 
+        VALUES (new.rowid, new.summary, new.text, 
+                CASE WHEN json_array_length(new.tags) > 0 
+                     THEN (SELECT group_concat(value, ' ') FROM json_each(new.tags))
+                     ELSE ''
+                END);
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS mem_fts_delete AFTER DELETE ON memories BEGIN
+        DELETE FROM mem_fts WHERE rowid = old.rowid;
+      END;
+
+      CREATE TRIGGER IF NOT EXISTS mem_fts_update AFTER UPDATE ON memories BEGIN
+        DELETE FROM mem_fts WHERE rowid = old.rowid;
+        INSERT INTO mem_fts(rowid, summary, text, tags) 
+        VALUES (new.rowid, new.summary, new.text,
+                CASE WHEN json_array_length(new.tags) > 0 
+                     THEN (SELECT group_concat(value, ' ') FROM json_each(new.tags))
+                     ELSE ''
+                END);
+      END;
+    `);
+  }
+
+  private setupTriggers() {
+    // Auto-cleanup expired memories
+    setInterval(() => {
+      this.cleanupExpired();
+    }, 60 * 60 * 1000); // Every hour
+  }
+
+  save(params: {
+    summary: string;
+    text: string;
+    tags?: string[];
+    paths?: string[];
+    importance?: number;
+    ttl?: number;
+  }): { id: string } {
+    // Project isolation is enforced by the database path itself
+    // Each project has its own database file, so no cross-contamination is possible
+
+    const now = Date.now();
+    const id = this.generateId();
+    
+    // Compute dedupe hash
+    const dedupeHash = this.computeDedupeHash(params.summary, params.paths || []);
+    
+    // Check for duplicates
+    const existing = this.db.prepare(
+      'SELECT id FROM memories WHERE dedupe_hash = ? AND project_id = ?'
+    ).get(dedupeHash, this.projectId);
+    
+    if (existing && typeof existing === 'object' && 'id' in existing) {
+      logger.info(`Duplicate memory detected, updating existing: ${(existing as any).id}`);
+      return this.update((existing as any).id as string, params);
+    }
+
+    // Calculate expiration
+    const expires_at = params.ttl ? now + (params.ttl * 1000) : null;
+
+    const stmt = this.db.prepare(`
+      INSERT INTO memories (
+        id, project_id, summary, text, tags, paths, 
+        importance, created_at, updated_at, ttl, expires_at, dedupe_hash
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      id,
+      this.projectId,
+      params.summary,
+      params.text,
+      JSON.stringify(params.tags || []),
+      JSON.stringify(params.paths || []),
+      params.importance || 3,
+      now,
+      now,
+      params.ttl || null,
+      expires_at,
+      dedupeHash
+    );
+
+    logger.info(`Memory saved: ${id} - ${params.summary}`);
+    
+    // Return the complete memory object
+    const memory: Memory = {
+      id,
+      project_id: this.projectId,
+      summary: params.summary,
+      text: params.text,
+      tags: params.tags || [],
+      paths: params.paths || [],
+      importance: params.importance || 3,
+      created_at: now,
+      updated_at: now,
+      ttl: params.ttl,
+      expires_at: expires_at || undefined
+    };
+    
+    return memory;
+  }
+
+  search(params: {
+    q: string;
+    k?: number;
+    require_path_match?: boolean;
+    tags?: string[];
+    include_expired?: boolean;
+  }): SearchResult[] {
+    const k = params.k || 10;
+    const now = Date.now();
+    
+    // Build FTS query
+    let query = `
+      SELECT 
+        m.*,
+        bm25(mem_fts) as fts_score,
+        snippet(mem_fts, 0, '[', ']', '...', 32) as snippet
+      FROM memories m
+      JOIN mem_fts ON m.rowid = mem_fts.rowid
+      WHERE mem_fts MATCH ?
+        AND m.project_id = ?
+    `;
+
+    const queryParams: any[] = [this.escapeQuery(params.q), this.projectId];
+
+    // Add expiration filter
+    if (!params.include_expired) {
+      query += ' AND (m.expires_at IS NULL OR m.expires_at > ?)';
+      queryParams.push(now);
+    }
+
+    // Add tag filter
+    if (params.tags && params.tags.length > 0) {
+      query += ' AND EXISTS (SELECT 1 FROM json_each(m.tags) WHERE value IN (' + 
+        params.tags.map(() => '?').join(',') + '))';
+      queryParams.push(...params.tags);
+    }
+
+    query += ' ORDER BY fts_score DESC, m.importance DESC, m.created_at DESC LIMIT ?';
+    queryParams.push(k);
+
+    const stmt = this.db.prepare(query);
+    const results = stmt.all(...queryParams) as any[];
+
+    return results.map(row => ({
+      memory: this.rowToMemory(row),
+      score: -row.fts_score, // BM25 returns negative scores
+      snippet: row.snippet
+    }));
+  }
+
+  getRecent(params: {
+    k?: number;
+    path_prefix?: string;
+    include_expired?: boolean;
+  }): Memory[] {
+    const k = params.k || 10;
+    const now = Date.now();
+    
+    let query = `
+      SELECT * FROM memories 
+      WHERE project_id = ?
+    `;
+    const queryParams: any[] = [this.projectId];
+
+    if (!params.include_expired) {
+      query += ' AND (expires_at IS NULL OR expires_at > ?)';
+      queryParams.push(now);
+    }
+
+    if (params.path_prefix) {
+      query += ` AND EXISTS (
+        SELECT 1 FROM json_each(paths) 
+        WHERE value LIKE ? || '%'
+      )`;
+      queryParams.push(params.path_prefix);
+    }
+
+    query += ' ORDER BY created_at DESC LIMIT ?';
+    queryParams.push(k);
+
+    const stmt = this.db.prepare(query);
+    const results = stmt.all(...queryParams) as any[];
+    
+    return results.map(row => this.rowToMemory(row));
+  }
+
+  forget(id: string): { ok: boolean; message?: string } {
+    try {
+      // Project isolation is enforced - each project has its own database
+
+      // Check if memory exists first
+      const checkStmt = this.db.prepare('SELECT id FROM memories WHERE id = ? AND project_id = ?');
+      const exists = checkStmt.get(id, this.projectId);
+      
+      if (!exists) {
+        return { 
+          ok: false, 
+          message: `Memory ${id} not found in project ${this.projectId}` 
+        };
+      }
+
+      // Delete from main table
+      const stmt = this.db.prepare('DELETE FROM memories WHERE id = ? AND project_id = ?');
+      const result = stmt.run(id, this.projectId);
+      
+      // Try to delete from FTS index if it exists
+      try {
+        const ftsExists = this.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='memories_fts'").get();
+        if (ftsExists) {
+          const ftsStmt = this.db.prepare('DELETE FROM memories_fts WHERE rowid = (SELECT rowid FROM memories WHERE id = ?)');
+          ftsStmt.run(id);
+        }
+      } catch (ftsError) {
+        // FTS table might not exist, that's okay
+        logger.debug('FTS deletion skipped:', ftsError);
+      }
+      
+      logger.info(`Memory deleted: ${id}`);
+      return { 
+        ok: result.changes > 0,
+        message: result.changes > 0 ? 'Memory deleted successfully' : 'Memory not found'
+      };
+    } catch (error: any) {
+      logger.error(`Failed to delete memory ${id}:`, error);
+      return { 
+        ok: false, 
+        message: `Error: ${error.message}` 
+      };
+    }
+  }
+
+  private update(id: string, params: Partial<Memory>): { id: string } {
+    const now = Date.now();
+    const updates: string[] = ['updated_at = ?'];
+    const values: any[] = [now];
+
+    if (params.summary !== undefined) {
+      updates.push('summary = ?');
+      values.push(params.summary);
+    }
+    if (params.text !== undefined) {
+      updates.push('text = ?');
+      values.push(params.text);
+    }
+    if (params.tags !== undefined) {
+      updates.push('tags = ?');
+      values.push(JSON.stringify(params.tags));
+    }
+    if (params.paths !== undefined) {
+      updates.push('paths = ?');
+      values.push(JSON.stringify(params.paths));
+    }
+    if (params.importance !== undefined) {
+      updates.push('importance = ?');
+      values.push(params.importance);
+    }
+
+    values.push(id, this.projectId);
+
+    const stmt = this.db.prepare(`
+      UPDATE memories 
+      SET ${updates.join(', ')}
+      WHERE id = ? AND project_id = ?
+    `);
+    
+    stmt.run(...values);
+    return { id };
+  }
+
+  private cleanupExpired() {
+    const now = Date.now();
+    const stmt = this.db.prepare('DELETE FROM memories WHERE expires_at < ?');
+    const result = stmt.run(now);
+    
+    if (result.changes > 0) {
+      logger.info(`Cleaned up ${result.changes} expired memories`);
+    }
+  }
+
+  private generateId(): string {
+    return `mem_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
+  }
+
+  private computeDedupeHash(summary: string, paths: string[]): string {
+    const normalized = summary.toLowerCase().trim() + '|' + paths.sort().join('|');
+    return crypto.createHash('md5').update(normalized).digest('hex');
+  }
+
+  private escapeQuery(query: string): string {
+    // Escape FTS5 special characters
+    return query.replace(/["]/g, '""');
+  }
+
+  private rowToMemory(row: any): Memory {
+    return {
+      id: row.id,
+      project_id: row.project_id,
+      summary: row.summary,
+      text: row.text,
+      tags: JSON.parse(row.tags),
+      paths: JSON.parse(row.paths),
+      importance: row.importance,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      ttl: row.ttl,
+      expires_at: row.expires_at
+    };
+  }
+
+  private getActiveProjectId(): string {
+    // Always use the projectId passed to constructor - ensures true isolation
+    // No environment variable dependency - each database instance is bound to its project
+    return this.projectId;
+  }
+
+  close() {
+    this.db.close();
+  }
+}

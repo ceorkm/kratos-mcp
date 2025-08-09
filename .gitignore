@@ -1,0 +1,55 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build
+dist/
+build/
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Kratos Protocol
+.kratos/
+!.kratos/config.yml.example
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary
+tmp/
+temp/
+
+# Test files
+test-*.js
+quick-test.js
+validate-*.js
+
+# Old versions
+README-V*.md
+MIGRATION_V*.md
+*-config.json
+
+# RBAC (removed)
+rbac.json

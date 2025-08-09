@@ -1,0 +1,88 @@
+{
+  "name": "kratos-mcp",
+  "version": "1.1.0",
+  "description": "Memory System for AI Coding Tools - MCP server with perfect project isolation",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "kratos-mcp": "./dist/index.js",
+    "kratos": "./dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/kratos-mcp.git"
+  },
+  "homepage": "https://github.com/yourusername/kratos-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/yourusername/kratos-mcp/issues"
+  },
+  "scripts": {
+    "build": "tsc",
+        "build:middleware": "tsc",
+    "build:all": "npm run build",
+    "dev": "tsx watch src/index.ts",
+    "dev:middleware": "tsx watch src/host-middleware-v2.ts",
+    "start": "node dist/index.js",
+    "start:production": "node dist/host-middleware-v2.js dist/index.js",
+    "start:server": "tsx src/index.ts",
+    "test": "npm run test:leak && npm run test:migration",
+    "test:leak": "tsx src/tests/leak-detection.test.ts",
+    "test:migration": "tsx src/tools/migrate-to-sqlite.ts --dry-run",
+    "migrate": "tsx src/tools/migrate-to-sqlite.ts",
+    "migrate:dry": "tsx src/tools/migrate-to-sqlite.ts --dry-run",
+    "ci:pre-commit": "tsx src/tools/ci-hooks.ts pre-commit",
+    "ci:pre-push": "tsx src/tools/ci-hooks.ts pre-push",
+    "ci:security-audit": "tsx src/tools/ci-hooks.ts security-audit",
+    "ci:nightly-cleanup": "tsx src/tools/ci-hooks.ts nightly-cleanup",
+    "ci:memory-report": "tsx src/tools/ci-hooks.ts memory-report",
+    "demo:autosave": "cd scaffold && node demo-autosave.js",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build:all"
+  },
+  "keywords": [
+    "mcp",
+    "ai-development",
+    "context-management",
+    "prompt-engineering",
+    "sqlite",
+    "full-text-search",
+    "memory-management",
+    "concept-store",
+    "auto-save",
+    "leak-protection"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "better-sqlite3": "^9.2.2",
+    "chalk": "^5.3.0",
+    "crypto-js": "^4.2.0",
+    "fs-extra": "^11.2.0",
+    "js-yaml": "^4.1.0",
+    "node-forge": "^1.3.1",
+    "sodium-native": "^5.0.6",
+    "winston": "^3.11.0",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/fs-extra": "^11.0.4",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ]
+}
