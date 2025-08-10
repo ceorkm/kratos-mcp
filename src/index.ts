@@ -65,13 +65,19 @@ class KratosProtocolServer {
     this.setupHandlers();
   }
 
-  private ensureInitialized(): void {
+  private async ensureInitialized(): Promise<void> {
     if (!this.memoryDb || !this.conceptStore || !this.contextBroker) {
-      throw new Error('Project not initialized. Please wait for initialization to complete.');
+      await this.initializeProject();
+      if (!this.memoryDb || !this.conceptStore || !this.contextBroker) {
+        throw new Error('Failed to initialize project. Check project configuration.');
+      }
     }
   }
 
   private async initializeProject(): Promise<void> {
+    // Skip if already initialized
+    if (this.memoryDb) return;
+    
     try {
       // AUTO-DETECT project from current directory
       // No more manual project ID needed!
@@ -527,7 +533,7 @@ class KratosProtocolServer {
             };
 
           case 'memory_link':
-            this.ensureInitialized();
+            await this.ensureInitialized();
             const concept = this.conceptStore!.get(args?.concept_id as string);
             if (!concept) {
               throw new Error(`Concept not found: ${args?.concept_id}`);
@@ -1008,28 +1014,20 @@ class KratosProtocolServer {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     
-    logger.info(chalk.green('🔱 Kratos Protocol - Production Edition'));
-    logger.info(chalk.blue('✨ SQLite + FTS5 | Concepts | Budget Control | Leak Protection'));
+    // DO NOT log anything here - it breaks JSON-RPC protocol!
+    // Initialization will happen lazily on first tool use
     
-    // Initialize project if available
-    await this.initializeProject();
-    
-    const activeProject = this.projectManager.getCurrentProject();
-    if (activeProject) {
-      logger.info(chalk.yellow(`📁 Active: ${activeProject.name} (${activeProject.id})`));
-    } else {
-      logger.info(chalk.gray('📁 No active project - set KRATOS_ACTIVE_PROJECT to enable all features'));
-    }
-
     // Graceful shutdown
     process.on('SIGINT', () => {
-      logger.info(chalk.yellow('\n🔄 Shutting down...'));
       this.memoryDb?.close();
       this.contextBroker?.close();
       this.conceptStore?.close();
       this.dataRetention?.close();
       process.exit(0);
     });
+    
+    // Keep process alive
+    process.stdin.resume();
   }
 }
 
