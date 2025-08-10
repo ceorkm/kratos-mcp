@@ -1,2 +1,29 @@
 #!/usr/bin/env node
-require('../dist/index.js');
+
+// This is the executable wrapper for kratos-mcp
+// It ensures the MCP server runs correctly when installed globally or via npx
+
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { spawn } from 'child_process';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Find the actual index.js file
+const indexPath = join(__dirname, '..', 'dist', 'index.js');
+
+// Spawn node with the actual server file
+const child = spawn(process.execPath, [indexPath], {
+  stdio: 'inherit',
+  env: { ...process.env, KRATOS_DEBUG: 'false' }
+});
+
+child.on('error', (err) => {
+  console.error('Failed to start Kratos MCP:', err);
+  process.exit(1);
+});
+
+child.on('exit', (code) => {
+  process.exit(code || 0);
+});
