@@ -865,7 +865,10 @@ class KratosProtocolServer {
             };
 
           default:
-            throw new Error(`Unknown tool: ${name}`);
+            throw new McpError(
+              ErrorCode.MethodNotFound,
+              `Unknown tool: ${name}`
+            );
         }
       } catch (error) {
         logger.error(`Tool error (${name}):`, error);
