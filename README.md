@@ -74,7 +74,7 @@ npm install kratos-mcp
 ### 1️⃣ Configure Your AI Tool
 
 <details>
-<summary><b>Claude Desktop</b></summary>
+<summary><b>Claude Desktop (Official Anthropic App)</b></summary>
 
 Add to `~/.config/claude/claude_desktop_config.json`:
 
@@ -93,7 +93,7 @@ Add to `~/.config/claude/claude_desktop_config.json`:
 <details>
 <summary><b>Cursor</b></summary>
 
-Add to `.cursor/mcp_config.json`:
+Add to `.cursor/mcp_config.json` in your project root:
 
 ```json
 {
@@ -108,9 +108,121 @@ Add to `.cursor/mcp_config.json`:
 </details>
 
 <details>
+<summary><b>Windsurf (Codeium)</b></summary>
+
+Add to `~/.windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Cline (VSCode Extension)</b></summary>
+
+1. Open VSCode settings (Cmd+, or Ctrl+,)
+2. Search for "Cline MCP"
+3. Add to MCP Servers configuration:
+
+```json
+{
+  "kratos": {
+    "command": "npx",
+    "args": ["kratos-mcp"]
+  }
+}
+```
+
+Or add to `.vscode/settings.json`:
+
+```json
+{
+  "cline.mcpServers": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Continue.dev</b></summary>
+
+Add to `~/.continue/config.json`:
+
+```json
+{
+  "models": [...],
+  "mcpServers": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Zed</b></summary>
+
+Add to `~/.config/zed/settings.json`:
+
+```json
+{
+  "assistant": {
+    "mcp_servers": {
+      "kratos": {
+        "command": "npx",
+        "args": ["kratos-mcp"]
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Void</b></summary>
+
+Add to `~/.void/config.json`:
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "kratos": {
+        "command": "npx",
+        "args": ["kratos-mcp"]
+      }
+    }
+  }
+}
+```
+</details>
+
+<details>
 <summary><b>Other MCP Tools</b></summary>
 
-Kratos works with any tool supporting the Model Context Protocol. Check your tool's documentation for MCP server configuration.
+Kratos works with any tool supporting the Model Context Protocol. The general format is:
+
+```json
+{
+  "command": "npx",
+  "args": ["kratos-mcp"]
+}
+```
+
+Check your tool's documentation for specific MCP server configuration location.
 
 </details>
 
@@ -317,7 +429,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ```bash
 # Clone the repo
-git clone https://github.com/yourusername/kratos-mcp.git
+git clone https://github.com/ceorkm/kratos-mcp.git
 
 # Install dependencies
 npm install
@@ -342,6 +454,6 @@ Inspired by the Four Pillars Framework and real-world experience building produc
 
 **Built for developers who value their time.**
 
-[Report Bug](https://github.com/yourusername/kratos-mcp/issues) • [Request Feature](https://github.com/yourusername/kratos-mcp/issues) • [Documentation](https://docs.kratos-mcp.dev)
+[Report Bug](https://github.com/ceorkm/kratos-mcp/issues) • [Request Feature](https://github.com/ceorkm/kratos-mcp/issues) • [Documentation](https://docs.kratos-mcp.dev)
 
 </div>

@@ -1,0 +1,45 @@
+# Landing page (not for npm)
+landing-page/
+
+# Source files (only include dist)
+src/
+*.ts
+!*.d.ts
+
+# Config files
+.eslintrc.json
+tsconfig.json
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+npm-debug.log*
+
+# Development
+.vscode/
+.idea/
+
+# Tests
+test/
+tests/
+*.test.js
+*.test.ts
+
+# Docs (if any)
+docs/
+
+# CI/CD
+.github/
+.travis.yml
+.circleci/
+
+# Examples
+examples/
+example/
+
+# Temporary files
+tmp/
+temp/
