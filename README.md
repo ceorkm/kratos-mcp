@@ -76,14 +76,29 @@ npm install kratos-mcp
 <details>
 <summary><b>Claude Desktop</b></summary>
 
-Add to `~/.config/claude/claude_desktop_config.json`:
+Add to your Claude Desktop config file:
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux**: `~/.config/claude/claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
+    }
+  }
+}
+```
+
+Or if you have it installed globally:
+```json
+{
+  "mcpServers": {
+    "kratos": {
+      "command": "kratos-mcp",
+      "args": []
     }
   }
 }
@@ -96,14 +111,14 @@ Add to `~/.config/claude/claude_desktop_config.json`:
 Run this command in your terminal:
 
 ```bash
-claude mcp add kratos -- npx kratos-mcp
+claude mcp add kratos -- npx --yes kratos-mcp@latest
 ```
 
 Or for global installation:
 
 ```bash
 # First install globally
-npm install -g kratos-mcp
+npm install -g kratos-mcp@latest
 
 # Then add to Claude Code
 claude mcp add kratos -- kratos-mcp
@@ -122,7 +137,7 @@ Add to `.cursor/mcp_config.json` in your project root:
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
     }
   }
 }
@@ -139,7 +154,7 @@ Add to `~/.windsurf/mcp_config.json`:
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
     }
   }
 }
@@ -189,7 +204,7 @@ Add to Augment settings under MCP configuration:
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
     }
   }
 }
@@ -206,7 +221,7 @@ Add to `.roo/config.json`:
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
     }
   }
 }
@@ -223,7 +238,7 @@ Configure in Zencoder settings:
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
     }
   }
 }
@@ -258,7 +273,7 @@ Add to Qodo configuration:
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
     }
   }
 }
@@ -291,7 +306,7 @@ Add to `~/.warp/mcp_config.json`:
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
     }
   }
 }
@@ -308,7 +323,7 @@ Configure in Opencode settings:
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
     }
   }
 }
@@ -325,7 +340,7 @@ Add to Copilot configuration:
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
     }
   }
 }
@@ -342,7 +357,7 @@ Add to Kiro settings:
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
     }
   }
 }
@@ -359,7 +374,7 @@ Configure in Codex settings:
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
     }
   }
 }
@@ -376,7 +391,7 @@ Add to LM Studio MCP configuration:
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
     }
   }
 }
@@ -393,7 +408,7 @@ Add to Perplexity settings:
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
     }
   }
 }
@@ -447,7 +462,7 @@ For any MCP-compatible VS Code extension, add to `.vscode/settings.json`:
   "mcpServers": {
     "kratos": {
       "command": "npx",
-      "args": ["kratos-mcp"]
+      "args": ["--yes", "kratos-mcp@latest"]
     }
   }
 }
