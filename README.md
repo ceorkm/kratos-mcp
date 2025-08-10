@@ -23,10 +23,6 @@ After building 30+ production apps with AI, we discovered a critical problem: **
 
 Kratos MCP solves this with the **Four Pillars Framework**—a battle-tested system that gives AI perfect memory of your project.
 
-<div align="center">
-  <img src="https://via.placeholder.com/800x400/1a1a1a/ffffff?text=Kratos+MCP+Architecture" alt="Kratos Architecture" width="100%" />
-</div>
-
 ## ✨ Features
 
 <table>
