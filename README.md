@@ -93,18 +93,23 @@ Add to `~/.config/claude/claude_desktop_config.json`:
 <details>
 <summary><b>Claude Code (Anthropic's VSCode Extension)</b></summary>
 
-Open VSCode settings and add to MCP configuration:
+Run this command in your terminal:
 
-```json
-{
-  "claude.mcpServers": {
-    "kratos": {
-      "command": "npx",
-      "args": ["kratos-mcp"]
-    }
-  }
-}
+```bash
+claude mcp add kratos -- npx kratos-mcp
 ```
+
+Or for global installation:
+
+```bash
+# First install globally
+npm install -g kratos-mcp
+
+# Then add to Claude Code
+claude mcp add kratos -- kratos-mcp
+```
+
+See [Claude Code MCP docs](https://docs.anthropic.com/claude-code/mcp) for more info.
 </details>
 
 <details>
