@@ -74,13 +74,30 @@ npm install kratos-mcp
 ### 1️⃣ Configure Your AI Tool
 
 <details>
-<summary><b>Claude Desktop (Official Anthropic App)</b></summary>
+<summary><b>Claude Desktop</b></summary>
 
 Add to `~/.config/claude/claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Claude Code (Anthropic's VSCode Extension)</b></summary>
+
+Open VSCode settings and add to MCP configuration:
+
+```json
+{
+  "claude.mcpServers": {
     "kratos": {
       "command": "npx",
       "args": ["kratos-mcp"]
@@ -127,9 +144,9 @@ Add to `~/.windsurf/mcp_config.json`:
 <details>
 <summary><b>Cline (VSCode Extension)</b></summary>
 
-1. Open VSCode settings (Cmd+, or Ctrl+,)
-2. Search for "Cline MCP"
-3. Add to MCP Servers configuration:
+1. Open VSCode Command Palette (Cmd+Shift+P)
+2. Run "Cline: Edit MCP Settings"
+3. Add server configuration:
 
 ```json
 {
@@ -139,15 +156,242 @@ Add to `~/.windsurf/mcp_config.json`:
   }
 }
 ```
+</details>
 
-Or add to `.vscode/settings.json`:
+<details>
+<summary><b>BoltAI</b></summary>
+
+1. Open BoltAI Settings
+2. Navigate to MCP Servers
+3. Add new server with:
 
 ```json
 {
-  "cline.mcpServers": {
+  "name": "kratos",
+  "command": "npx",
+  "args": ["kratos-mcp"]
+}
+```
+</details>
+
+<details>
+<summary><b>Augment Code</b></summary>
+
+Add to Augment settings under MCP configuration:
+
+```json
+{
+  "mcp.servers": {
     "kratos": {
       "command": "npx",
       "args": ["kratos-mcp"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Roo Code (VSCode Extension)</b></summary>
+
+Add to `.roo/config.json`:
+
+```json
+{
+  "mcpServers": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Zencoder</b></summary>
+
+Configure in Zencoder settings:
+
+```json
+{
+  "mcp": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Amazon Q Developer</b></summary>
+
+Add to Q Developer settings:
+
+```json
+{
+  "mcpServers": [
+    {
+      "name": "kratos",
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  ]
+}
+```
+</details>
+
+<details>
+<summary><b>Qodo Gen</b></summary>
+
+Add to Qodo configuration:
+
+```json
+{
+  "mcp.servers": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>JetBrains AI Assistant</b></summary>
+
+1. Open Settings → Tools → AI Assistant
+2. Add MCP server:
+
+```json
+{
+  "kratos": {
+    "command": "npx",
+    "args": ["kratos-mcp"]
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Warp Terminal</b></summary>
+
+Add to `~/.warp/mcp_config.json`:
+
+```json
+{
+  "servers": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Opencode</b></summary>
+
+Configure in Opencode settings:
+
+```json
+{
+  "mcp.servers": [
+    {
+      "name": "kratos",
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  ]
+}
+```
+</details>
+
+<details>
+<summary><b>Copilot Coding Agent</b></summary>
+
+Add to Copilot configuration:
+
+```json
+{
+  "mcpServers": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Kiro</b></summary>
+
+Add to Kiro settings:
+
+```json
+{
+  "mcp": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>OpenAI Codex</b></summary>
+
+Configure in Codex settings:
+
+```json
+{
+  "servers": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>LM Studio</b></summary>
+
+Add to LM Studio MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><b>Perplexity Desktop</b></summary>
+
+Add to Perplexity settings:
+
+```json
+{
+  "mcp": {
+    "servers": {
+      "kratos": {
+        "command": "npx",
+        "args": ["kratos-mcp"]
+      }
     }
   }
 }
@@ -192,21 +436,42 @@ Add to `~/.config/zed/settings.json`:
 </details>
 
 <details>
-<summary><b>Void</b></summary>
+<summary><b>VS Code (Generic MCP Extensions)</b></summary>
 
-Add to `~/.void/config.json`:
+For any MCP-compatible VS Code extension, add to `.vscode/settings.json`:
 
 ```json
 {
-  "mcp": {
-    "servers": {
-      "kratos": {
-        "command": "npx",
-        "args": ["kratos-mcp"]
-      }
+  "mcp.servers": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
     }
   }
 }
+```
+</details>
+
+<details>
+<summary><b>Docker Installation</b></summary>
+
+Run Kratos MCP in a container:
+
+```bash
+docker run -d \
+  --name kratos-mcp \
+  -v ~/.kratos:/root/.kratos \
+  ghcr.io/ceorkm/kratos-mcp:latest
+```
+</details>
+
+<details>
+<summary><b>Smithery Registry</b></summary>
+
+Install via Smithery:
+
+```bash
+smithery install kratos-mcp
 ```
 </details>
 
