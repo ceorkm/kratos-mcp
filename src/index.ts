@@ -84,7 +84,7 @@ class KratosProtocolServer {
       const workingDir = process.env.KRATOS_PROJECT_ROOT || process.cwd();
       const project = await this.projectManager.detectProject(workingDir);
       
-      logger.info(`Auto-detected project: ${project.name} at ${project.root}`);
+      logger.debug(`Auto-detected project: ${project.name} at ${project.root}`);
       
       // Initialize components with ISOLATED project
       this.memoryDb = new MemoryDatabase(project.root, project.id);
@@ -95,9 +95,9 @@ class KratosProtocolServer {
       this.encryption = new EncryptionManager(project.root, project.id);
       this.dataRetention = new DataRetentionManager(project.root, project.id);
 
-      logger.info(chalk.green(`✅ Project initialized: ${project.name}`));
-      logger.info(chalk.blue(`📁 Project root: ${project.root}`));
-      logger.info(chalk.yellow(`🔐 Isolated data: ~/.kratos/projects/${project.id}/`));
+      logger.debug(chalk.green(`✅ Project initialized: ${project.name}`));
+      logger.debug(chalk.blue(`📁 Project root: ${project.root}`));
+      logger.debug(chalk.yellow(`🔐 Isolated data: ~/.kratos/projects/${project.id}/`));
     } catch (error) {
       logger.error('Failed to initialize project:', error);
     }

@@ -186,7 +186,7 @@ Add to Augment settings under MCP configuration:
 
 ```json
 {
-  "mcp.servers": {
+  "mcpServers": {
     "kratos": {
       "command": "npx",
       "args": ["kratos-mcp"]
@@ -255,7 +255,7 @@ Add to Qodo configuration:
 
 ```json
 {
-  "mcp.servers": {
+  "mcpServers": {
     "kratos": {
       "command": "npx",
       "args": ["kratos-mcp"]
@@ -447,7 +447,7 @@ For any MCP-compatible VS Code extension, add to `.vscode/settings.json`:
 
 ```json
 {
-  "mcp.servers": {
+  "mcpServers": {
     "kratos": {
       "command": "npx",
       "args": ["kratos-mcp"]
