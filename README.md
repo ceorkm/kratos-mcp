@@ -220,7 +220,7 @@ Configure in Zencoder settings:
 
 ```json
 {
-  "mcp": {
+  "mcpServers": {
     "kratos": {
       "command": "npx",
       "args": ["kratos-mcp"]
@@ -288,7 +288,7 @@ Add to `~/.warp/mcp_config.json`:
 
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "kratos": {
       "command": "npx",
       "args": ["kratos-mcp"]
@@ -305,13 +305,12 @@ Configure in Opencode settings:
 
 ```json
 {
-  "mcp.servers": [
-    {
-      "name": "kratos",
+  "mcpServers": {
+    "kratos": {
       "command": "npx",
       "args": ["kratos-mcp"]
     }
-  ]
+  }
 }
 ```
 </details>
@@ -340,7 +339,7 @@ Add to Kiro settings:
 
 ```json
 {
-  "mcp": {
+  "mcpServers": {
     "kratos": {
       "command": "npx",
       "args": ["kratos-mcp"]
@@ -357,7 +356,7 @@ Configure in Codex settings:
 
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "kratos": {
       "command": "npx",
       "args": ["kratos-mcp"]
@@ -391,12 +390,10 @@ Add to Perplexity settings:
 
 ```json
 {
-  "mcp": {
-    "servers": {
-      "kratos": {
-        "command": "npx",
-        "args": ["kratos-mcp"]
-      }
+  "mcpServers": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
     }
   }
 }
@@ -429,7 +426,7 @@ Add to `~/.config/zed/settings.json`:
 ```json
 {
   "assistant": {
-    "mcp_servers": {
+    "mcpServers": {
       "kratos": {
         "command": "npx",
         "args": ["kratos-mcp"]
@@ -457,28 +454,7 @@ For any MCP-compatible VS Code extension, add to `.vscode/settings.json`:
 ```
 </details>
 
-<details>
-<summary><b>Docker Installation</b></summary>
 
-Run Kratos MCP in a container:
-
-```bash
-docker run -d \
-  --name kratos-mcp \
-  -v ~/.kratos:/root/.kratos \
-  ghcr.io/ceorkm/kratos-mcp:latest
-```
-</details>
-
-<details>
-<summary><b>Smithery Registry</b></summary>
-
-Install via Smithery:
-
-```bash
-smithery install kratos-mcp
-```
-</details>
 
 <details>
 <summary><b>Other MCP Tools</b></summary>
@@ -587,14 +563,14 @@ memory_search({
 </td>
 </tr>
 <tr>
-<td><code>prd_save</code></td>
+<td><code>prd_update</code></td>
 <td>Define project requirements</td>
 <td>
 
 ```javascript
-// Save PRD section
-prd_save({
-  section: "api_structure",
+// Update PRD section
+prd_update({
+  feature: "api_structure",
   content: "RESTful endpoints..."
 })
 ```
@@ -602,15 +578,15 @@ prd_save({
 </td>
 </tr>
 <tr>
-<td><code>prompt_save</code></td>
+<td><code>prompt_build</code></td>
 <td>Create reusable prompts</td>
 <td>
 
 ```javascript
-// Save component template
-prompt_save({
-  name: "create_component",
-  template: "Create React component..."
+// Build structured prompt
+prompt_build({
+  goal: "Create React component",
+  role: "Senior React Developer"
 })
 ```
 
@@ -724,6 +700,6 @@ Inspired by the Four Pillars Framework and real-world experience building produc
 
 **Built for developers who value their time.**
 
-[Report Bug](https://github.com/ceorkm/kratos-mcp/issues) • [Request Feature](https://github.com/ceorkm/kratos-mcp/issues) • [Documentation](https://docs.kratos-mcp.dev)
+[Report Bug](https://github.com/ceorkm/kratos-mcp/issues) • [Request Feature](https://github.com/ceorkm/kratos-mcp/issues) • [Documentation](https://github.com/ceorkm/kratos-mcp#readme)
 
 </div>
