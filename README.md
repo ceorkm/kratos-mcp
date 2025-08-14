@@ -1,3 +1,5 @@
+[![MSeeP.ai Security Assessment Badge](https://mseep.net/pr/ceorkm-kratos-mcp-badge.png)](https://mseep.ai/app/ceorkm-kratos-mcp)
+
 <div align="center">
   
 # 🏛️ Kratos MCP
