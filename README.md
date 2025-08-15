@@ -11,7 +11,7 @@
 
 **Never explain your codebase again. Let AI remember everything.**
 
-[Installation](#-installation) • [Quick Start](#-quick-start) • [Features](#-features) • [Documentation](#-documentation) • [Contributing](#-contributing)
+🌐 **[kratos-mcp.com](https://kratos-mcp.com)** • [Installation](#-installation) • [Quick Start](#-quick-start) • [Features](#-features) • [Documentation](#-documentation) • [Contributing](#-contributing)
 
 </div>
 
