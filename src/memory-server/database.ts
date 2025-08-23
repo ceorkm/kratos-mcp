@@ -277,6 +277,22 @@ export class MemoryDatabase {
     return results.map(row => this.rowToMemory(row));
   }
 
+  // Get a single memory by ID with full text
+  get(id: string): Memory | null {
+    const stmt = this.db.prepare(`
+      SELECT * FROM memories 
+      WHERE id = ? AND project_id = ?
+    `);
+    
+    const result = stmt.get(id, this.projectId) as any;
+    
+    if (!result) {
+      return null;
+    }
+    
+    return this.rowToMemory(result);
+  }
+
   forget(id: string): { ok: boolean; message?: string } {
     try {
       // Project isolation is enforced - each project has its own database

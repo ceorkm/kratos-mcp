@@ -151,6 +151,17 @@ class KratosProtocolServer {
           },
         },
         {
+          name: 'memory_get',
+          description: 'Get a specific memory by ID with full text',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              id: { type: 'string', description: 'Memory ID to retrieve' },
+            },
+            required: ['id'],
+          },
+        },
+        {
           name: 'memory_forget',
           description: 'Delete a memory by ID',
           inputSchema: {
@@ -492,7 +503,7 @@ class KratosProtocolServer {
                   results: searchResults.map(r => ({
                     id: r.memory.id,
                     summary: r.memory.summary,
-                    text: r.memory.text.substring(0, 200) + '...',
+                    text: r.memory.text, // Return FULL text, not truncated
                     score: r.score,
                     tags: r.memory.tags,
                     paths: r.memory.paths,
@@ -514,12 +525,32 @@ class KratosProtocolServer {
                   memories: recentResults.map(m => ({
                     id: m.id,
                     summary: m.summary,
+                    text: m.text, // Include FULL text
                     tags: m.tags,
                     paths: m.paths,
                     importance: m.importance,
                     created_at: m.created_at
                   }))
                 }, null, 2)
+              }]
+            };
+
+          case 'memory_get':
+            const memory = this.memoryDb!.get(args?.id as string);
+            if (!memory) {
+              return {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    error: `Memory not found: ${args?.id}`
+                  }, null, 2)
+                }]
+              };
+            }
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify(memory, null, 2)
               }]
             };
 
