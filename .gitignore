@@ -56,3 +56,5 @@ rbac.json
 
 # Landing page (not for GitHub)
 landing-page/
+# Local Netlify folder
+.netlify

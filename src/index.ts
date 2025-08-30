@@ -503,13 +503,15 @@ class KratosProtocolServer {
                   results: searchResults.map(r => ({
                     id: r.memory.id,
                     summary: r.memory.summary,
-                    text: r.memory.text, // Return FULL text, not truncated
+                    // Don't return full text in search! Use memory_get for that
+                    snippet: r.snippet, // This already has the search context
                     score: r.score,
                     tags: r.memory.tags,
                     paths: r.memory.paths,
                     importance: r.memory.importance,
                     created_at: r.memory.created_at,
-                    snippet: r.snippet
+                    // Add hint for full retrieval
+                    _hint: 'Use memory_get with id to retrieve full text'
                   }))
                 }, null, 2)
               }]
@@ -525,11 +527,14 @@ class KratosProtocolServer {
                   memories: recentResults.map(m => ({
                     id: m.id,
                     summary: m.summary,
-                    text: m.text, // Include FULL text
+                    // Return preview only, not full text
+                    preview: m.text.substring(0, 150) + (m.text.length > 150 ? '...' : ''),
                     tags: m.tags,
                     paths: m.paths,
                     importance: m.importance,
-                    created_at: m.created_at
+                    created_at: m.created_at,
+                    text_length: m.text.length,
+                    _hint: 'Use memory_get with id to retrieve full text'
                   }))
                 }, null, 2)
               }]
