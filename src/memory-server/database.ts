@@ -699,19 +699,67 @@ export class MemoryDatabase {
       filtersApplied.push(`Requiring path match for current directory`);
     }
 
-    // Get total count and sample results
-    const countStmt = this.db.prepare(baseQuery.replace('m.summary,', '').replace(', bm25(mem_fts) as fts_score', '').replace(', snippet(mem_fts, 0, \'[\', \']\', \'...\', 32) as snippet', ''));
-    const sampleStmt = this.db.prepare(baseQuery + ` ORDER BY bm25(mem_fts) LIMIT 3`);
+    // Build separate queries for count and samples
+    let countQuery = `
+      SELECT COUNT(*) as total_matches
+      FROM memories m
+      JOIN mem_fts ON m.rowid = mem_fts.rowid
+      WHERE mem_fts MATCH ?
+        AND m.project_id = ?
+    `;
+
+    let sampleQuery = `
+      SELECT m.summary,
+             bm25(mem_fts) as fts_score,
+             snippet(mem_fts, 0, '[', ']', '...', 32) as snippet
+      FROM memories m
+      JOIN mem_fts ON m.rowid = mem_fts.rowid
+      WHERE mem_fts MATCH ?
+        AND m.project_id = ?
+    `;
+
+    // Apply the same filters to both queries
+    const countParams = [...queryParams];
+    const sampleParams = [...queryParams];
+
+    if (!params.include_expired) {
+      countQuery += ' AND (m.expires_at IS NULL OR m.expires_at > ?)';
+      sampleQuery += ' AND (m.expires_at IS NULL OR m.expires_at > ?)';
+    }
+
+    if (params.tags && params.tags.length > 0) {
+      const tagConditions = params.tags.map(() => 'json_extract(m.tags, ?) IS NOT NULL').join(' AND ');
+      countQuery += ` AND (${tagConditions})`;
+      sampleQuery += ` AND (${tagConditions})`;
+    }
+
+    if (params.require_path_match) {
+      const cwd = process.cwd();
+      const relativeCwd = cwd.replace(process.env.HOME || '', '~');
+      countQuery += ` AND (
+        json_extract(m.paths, '$') LIKE '%' || ? || '%' OR
+        json_extract(m.paths, '$') LIKE '%' || ? || '%'
+      )`;
+      sampleQuery += ` AND (
+        json_extract(m.paths, '$') LIKE '%' || ? || '%' OR
+        json_extract(m.paths, '$') LIKE '%' || ? || '%'
+      )`;
+    }
+
+    sampleQuery += ` ORDER BY bm25(mem_fts) LIMIT 3`;
+
+    const countStmt = this.db.prepare(countQuery);
+    const sampleStmt = this.db.prepare(sampleQuery);
 
     let totalMatches = 0;
     let sampleResults: any[] = [];
 
     try {
-      const countResult = countStmt.get(...queryParams) as any;
+      const countResult = countStmt.get(...countParams) as any;
       totalMatches = countResult?.total_matches || 0;
 
       if (totalMatches > 0) {
-        sampleResults = sampleStmt.all(...queryParams) as any[];
+        sampleResults = sampleStmt.all(...sampleParams) as any[];
       }
     } catch (error) {
       // Query failed - try fallback explanations
