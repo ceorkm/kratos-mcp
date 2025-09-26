@@ -65,6 +65,200 @@ class KratosProtocolServer {
     this.setupHandlers();
   }
 
+  private parseNaturalLanguageQuery(question: string): {
+    searchTerms: string[];
+    tags: string[];
+    timeframe?: string;
+    intent: 'search' | 'list' | 'explain' | 'find';
+  } {
+    const lowerQ = question.toLowerCase();
+
+    // Extract search terms (remove common question words)
+    const stopWords = new Set(['show', 'me', 'all', 'the', 'what', 'how', 'when', 'where', 'why', 'find', 'get', 'about', 'in', 'on', 'at', 'to', 'for', 'with', 'by', 'from']);
+    const words = question.split(/\s+/).filter(word =>
+      word.length > 2 && !stopWords.has(word.toLowerCase())
+    );
+
+    // Detect intent
+    let intent: 'search' | 'list' | 'explain' | 'find' = 'search';
+    if (lowerQ.includes('show me') || lowerQ.includes('list')) {
+      intent = 'list';
+    } else if (lowerQ.includes('explain') || lowerQ.includes('what is')) {
+      intent = 'explain';
+    } else if (lowerQ.includes('find') || lowerQ.includes('where')) {
+      intent = 'find';
+    }
+
+    // Extract timeframe
+    let timeframe: string | undefined;
+    if (lowerQ.includes('today')) timeframe = 'today';
+    else if (lowerQ.includes('yesterday')) timeframe = 'yesterday';
+    else if (lowerQ.includes('this week')) timeframe = 'week';
+    else if (lowerQ.includes('last week')) timeframe = 'last_week';
+    else if (lowerQ.includes('this month')) timeframe = 'month';
+
+    // Extract potential tags from technical terms
+    const tags: string[] = [];
+    const techTerms = ['bug', 'error', 'fix', 'debug', 'feature', 'api', 'database', 'auth', 'ui', 'frontend', 'backend'];
+    techTerms.forEach(term => {
+      if (lowerQ.includes(term)) tags.push(term);
+    });
+
+    return {
+      searchTerms: words,
+      tags,
+      timeframe,
+      intent
+    };
+  }
+
+  private generateSearchSuggestions(debugInfo: any): string[] {
+    const suggestions: string[] = [];
+
+    if (debugInfo.fallback_used === 'removed_special_chars') {
+      suggestions.push('Try using spaces instead of hyphens or special characters');
+      suggestions.push('Consider using simpler search terms');
+    } else if (debugInfo.fallback_used === 'or_search') {
+      suggestions.push('Your search was broadened to find individual words');
+      suggestions.push('Try a more specific phrase for exact matches');
+    } else if (debugInfo.fallback_used === 'broad_search') {
+      suggestions.push('Search was narrowed to just the first word');
+      suggestions.push('Consider using different keywords');
+    } else if (debugInfo.fallback_used === 'all_failed') {
+      suggestions.push('No memories found with those terms');
+      suggestions.push('Try broader keywords or check spelling');
+      suggestions.push('Use memory_get_recent() to see all recent memories');
+    } else if (debugInfo.results?.length === 0) {
+      suggestions.push('No results found - try broader search terms');
+      suggestions.push('Check if memories exist with memory_get_recent()');
+    }
+
+    if (debugInfo.search_time_ms > 100) {
+      suggestions.push('Search took longer than expected - consider using more specific terms');
+    }
+
+    return suggestions;
+  }
+
+  private suggestTags(text: string, paths?: string[]): {
+    suggested: string[];
+    confidence: 'high' | 'medium' | 'low';
+    reasons: string[];
+  } {
+    const suggested: string[] = [];
+    const reasons: string[] = [];
+    const lowerText = text.toLowerCase();
+
+    // Programming languages from file extensions
+    const langMap: { [key: string]: string } = {
+      '.js': 'javascript',
+      '.ts': 'typescript',
+      '.py': 'python',
+      '.java': 'java',
+      '.cpp': 'cpp',
+      '.c': 'c',
+      '.rs': 'rust',
+      '.go': 'go',
+      '.php': 'php',
+      '.rb': 'ruby',
+      '.swift': 'swift',
+      '.kt': 'kotlin',
+      '.dart': 'dart'
+    };
+
+    // Extract language tags from paths
+    if (paths) {
+      paths.forEach(path => {
+        Object.entries(langMap).forEach(([ext, lang]) => {
+          if (path.endsWith(ext)) {
+            suggested.push(lang);
+            reasons.push(`Detected ${lang} from file path: ${path}`);
+          }
+        });
+      });
+    }
+
+    // Technical terms mapping
+    const techTerms: { [key: string]: string[] } = {
+      'error': ['debugging', 'troubleshooting'],
+      'bug': ['debugging', 'fix'],
+      'api': ['api', 'integration'],
+      'database': ['database', 'data'],
+      'auth': ['authentication', 'security'],
+      'login': ['authentication', 'user-management'],
+      'test': ['testing', 'qa'],
+      'deploy': ['deployment', 'devops'],
+      'docker': ['docker', 'containerization'],
+      'react': ['react', 'frontend'],
+      'vue': ['vue', 'frontend'],
+      'angular': ['angular', 'frontend'],
+      'node': ['nodejs', 'backend'],
+      'express': ['express', 'backend'],
+      'mongodb': ['mongodb', 'database'],
+      'mysql': ['mysql', 'database'],
+      'postgresql': ['postgresql', 'database'],
+      'redis': ['redis', 'caching'],
+      'aws': ['aws', 'cloud'],
+      'azure': ['azure', 'cloud'],
+      'gcp': ['gcp', 'cloud'],
+      'kubernetes': ['kubernetes', 'devops'],
+      'css': ['css', 'styling'],
+      'html': ['html', 'frontend'],
+      'ui': ['ui', 'design'],
+      'ux': ['ux', 'design']
+    };
+
+    // Find technical terms in text
+    Object.entries(techTerms).forEach(([term, tags]) => {
+      if (lowerText.includes(term)) {
+        tags.forEach(tag => {
+          if (!suggested.includes(tag)) {
+            suggested.push(tag);
+            reasons.push(`Found "${term}" suggesting "${tag}"`);
+          }
+        });
+      }
+    });
+
+    // Framework detection
+    const frameworks = ['tauri', 'electron', 'flutter', 'react-native', 'ionic', 'cordova'];
+    frameworks.forEach(framework => {
+      if (lowerText.includes(framework)) {
+        suggested.push(framework);
+        reasons.push(`Detected framework: ${framework}`);
+      }
+    });
+
+    // Action-based tags
+    const actionWords: { [key: string]: string } = {
+      'fix': 'fix',
+      'implement': 'implementation',
+      'refactor': 'refactoring',
+      'optimize': 'optimization',
+      'debug': 'debugging',
+      'feature': 'feature',
+      'improvement': 'enhancement'
+    };
+
+    Object.entries(actionWords).forEach(([word, tag]) => {
+      if (lowerText.includes(word)) {
+        suggested.push(tag);
+        reasons.push(`Action word "${word}" suggests "${tag}"`);
+      }
+    });
+
+    // Determine confidence
+    let confidence: 'high' | 'medium' | 'low' = 'low';
+    if (suggested.length >= 5) confidence = 'high';
+    else if (suggested.length >= 3) confidence = 'medium';
+
+    return {
+      suggested: [...new Set(suggested)], // Remove duplicates
+      confidence,
+      reasons
+    };
+  }
+
   private async ensureInitialized(): Promise<void> {
     if (!this.memoryDb || !this.conceptStore || !this.contextBroker) {
       await this.initializeProject();
@@ -134,6 +328,23 @@ class KratosProtocolServer {
               require_path_match: { type: 'boolean', description: 'Require path matching' },
               tags: { type: 'array', items: { type: 'string' }, description: 'Filter by tags' },
               include_expired: { type: 'boolean', description: 'Include expired memories' },
+              debug: { type: 'boolean', description: 'Include debug information about search process' },
+              scope: { type: 'string', enum: ['project', 'global', 'all'], description: 'Search scope: project (default), global concepts, or all' },
+            },
+            required: ['q'],
+          },
+        },
+        {
+          name: 'memory_search_preview',
+          description: 'Preview what a search would return without executing it',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              q: { type: 'string', description: 'Search query to preview' },
+              k: { type: 'integer', description: 'Max results that would be returned' },
+              require_path_match: { type: 'boolean', description: 'Would require path matching' },
+              tags: { type: 'array', items: { type: 'string' }, description: 'Would filter by these tags' },
+              include_expired: { type: 'boolean', description: 'Would include expired memories' },
             },
             required: ['q'],
           },
@@ -159,6 +370,41 @@ class KratosProtocolServer {
               id: { type: 'string', description: 'Memory ID to retrieve' },
             },
             required: ['id'],
+          },
+        },
+        {
+          name: 'memory_get_multiple',
+          description: 'Get multiple memories by IDs with full text (bulk operation)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              ids: { type: 'array', items: { type: 'string' }, description: 'Array of memory IDs to retrieve' },
+            },
+            required: ['ids'],
+          },
+        },
+        {
+          name: 'memory_ask',
+          description: 'Ask questions about your memories using natural language',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              question: { type: 'string', description: 'Natural language question about your memories' },
+              limit: { type: 'integer', description: 'Max results to return (default: 10)' },
+            },
+            required: ['question'],
+          },
+        },
+        {
+          name: 'memory_suggest_tags',
+          description: 'Get suggested tags for a memory based on content',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              text: { type: 'string', description: 'Memory text to analyze for tag suggestions' },
+              paths: { type: 'array', items: { type: 'string' }, description: 'File paths related to this memory' },
+            },
+            required: ['text'],
           },
         },
         {
@@ -494,25 +740,70 @@ class KratosProtocolServer {
             };
 
           case 'memory_search':
-            const searchResults = this.memoryDb!.search(args as any);
+            const scope = (args as any)?.scope || 'project';
+            const projectInfo = await this.projectManager.detectProject(process.cwd());
+
+            if ((args as any)?.debug) {
+              // Use enhanced search with debug info
+              const enhancedResults = this.memoryDb!.searchWithDebug(args as any);
+              return {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    search_scope: `${scope} (${scope === 'project' ? projectInfo.name : 'global concepts'})`,
+                    count: enhancedResults.results.length,
+                    results: enhancedResults.results.map(r => ({
+                      id: r.memory.id,
+                      summary: r.memory.summary,
+                      snippet: r.snippet,
+                      score: r.score,
+                      tags: r.memory.tags,
+                      paths: r.memory.paths,
+                      importance: r.memory.importance,
+                      created_at: r.memory.created_at,
+                      _hint: 'Use memory_get with id to retrieve full text'
+                    })),
+                    debug: {
+                      ...enhancedResults.debug_info,
+                      suggestions: this.generateSearchSuggestions(enhancedResults.debug_info)
+                    }
+                  }, null, 2)
+                }]
+              };
+            } else {
+              // Regular search
+              const searchResults = this.memoryDb!.search(args as any);
+              return {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    search_scope: `${scope} (${scope === 'project' ? projectInfo.name : 'global concepts'})`,
+                    count: searchResults.length,
+                    results: searchResults.map(r => ({
+                      id: r.memory.id,
+                      summary: r.memory.summary,
+                      snippet: r.snippet,
+                      score: r.score,
+                      tags: r.memory.tags,
+                      paths: r.memory.paths,
+                      importance: r.memory.importance,
+                      created_at: r.memory.created_at,
+                      _hint: 'Use memory_get with id to retrieve full text'
+                    }))
+                  }, null, 2)
+                }]
+              };
+            }
+
+          case 'memory_search_preview':
+            const previewResult = this.memoryDb!.searchPreview(args as any);
             return {
               content: [{
                 type: 'text',
                 text: JSON.stringify({
-                  count: searchResults.length,
-                  results: searchResults.map(r => ({
-                    id: r.memory.id,
-                    summary: r.memory.summary,
-                    // Don't return full text in search! Use memory_get for that
-                    snippet: r.snippet, // This already has the search context
-                    score: r.score,
-                    tags: r.memory.tags,
-                    paths: r.memory.paths,
-                    importance: r.memory.importance,
-                    created_at: r.memory.created_at,
-                    // Add hint for full retrieval
-                    _hint: 'Use memory_get with id to retrieve full text'
-                  }))
+                  search_preview: previewResult.preview,
+                  suggestions: previewResult.suggestions,
+                  _note: 'This is a preview only. Use memory_search to get actual results.'
                 }, null, 2)
               }]
             };
@@ -559,6 +850,93 @@ class KratosProtocolServer {
               }]
             };
 
+          case 'memory_get_multiple':
+            const ids = (args as any)?.ids || [];
+            const memories = this.memoryDb!.getMultiple(ids);
+            const found = Object.values(memories).filter(m => m !== null).length;
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  requested: ids.length,
+                  found: found,
+                  not_found: ids.length - found,
+                  memories: memories
+                }, null, 2)
+              }]
+            };
+
+          case 'memory_ask':
+            const question = (args as any)?.question || '';
+            const limit = (args as any)?.limit || 10;
+
+            // Parse natural language query
+            const parsed = this.parseNaturalLanguageQuery(question);
+            const nlSearchQuery = parsed.searchTerms.join(' ');
+
+            // Build search parameters
+            const searchParams: any = {
+              q: nlSearchQuery,
+              k: limit,
+              tags: parsed.tags.length > 0 ? parsed.tags : undefined,
+              debug: true // Always use debug for natural language queries
+            };
+
+            // Execute search
+            const nlResults = this.memoryDb!.searchWithDebug(searchParams);
+
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  question: question,
+                  understood_as: {
+                    search_terms: parsed.searchTerms,
+                    intent: parsed.intent,
+                    extracted_tags: parsed.tags,
+                    timeframe: parsed.timeframe || 'any'
+                  },
+                  count: nlResults.results.length,
+                  results: nlResults.results.map(r => ({
+                    id: r.memory.id,
+                    summary: r.memory.summary,
+                    snippet: r.snippet,
+                    score: r.score,
+                    tags: r.memory.tags,
+                    paths: r.memory.paths,
+                    importance: r.memory.importance,
+                    created_at: r.memory.created_at,
+                    _hint: 'Use memory_get with id to retrieve full text'
+                  })),
+                  search_debug: {
+                    ...nlResults.debug_info,
+                    natural_language_parsing: 'Query was automatically converted to search parameters'
+                  }
+                }, null, 2)
+              }]
+            };
+
+          case 'memory_suggest_tags':
+            const tagText = (args as any)?.text || '';
+            const tagPaths = (args as any)?.paths || [];
+            const tagSuggestions = this.suggestTags(tagText, tagPaths);
+
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  text_analyzed: tagText.substring(0, 100) + (tagText.length > 100 ? '...' : ''),
+                  paths_analyzed: tagPaths,
+                  suggestions: {
+                    tags: tagSuggestions.suggested,
+                    confidence: tagSuggestions.confidence,
+                    reasoning: tagSuggestions.reasons
+                  },
+                  usage: 'Use these suggested tags when saving your memory with memory_save'
+                }, null, 2)
+              }]
+            };
+
           case 'memory_forget':
             const forgetResult = this.memoryDb!.forget(args?.id as string);
             return {
@@ -598,9 +976,9 @@ class KratosProtocolServer {
               );
             }
             // Handle empty query or missing query by returning all concepts
-            const searchQuery = (args?.q as string) || '*';
+            const conceptSearchQuery = (args?.q as string) || '*';
             const conceptSearchResults = this.conceptStore.search({
-              q: searchQuery.trim() || '*',  // Default to wildcard if empty
+              q: conceptSearchQuery.trim() || '*',  // Default to wildcard if empty
               k: args?.k as number || 10,
               allowlist: args?.allowlist as string[],
               projectId: undefined  // Don't filter by project to show all global concepts
@@ -608,7 +986,7 @@ class KratosProtocolServer {
             
             // If no results and query wasn't wildcard, try wildcard as fallback
             let finalConceptResults = conceptSearchResults;
-            if (conceptSearchResults.length === 0 && searchQuery !== '*') {
+            if (conceptSearchResults.length === 0 && conceptSearchQuery !== '*') {
               finalConceptResults = this.conceptStore.search({
                 q: '*',
                 k: args?.k as number || 10,
@@ -620,7 +998,7 @@ class KratosProtocolServer {
               content: [{
                 type: 'text',
                 text: JSON.stringify({
-                  query: searchQuery,
+                  query: conceptSearchQuery,
                   count: finalConceptResults.length,
                   concepts: finalConceptResults.map(c => ({
                     id: c.concept.id,
@@ -632,9 +1010,9 @@ class KratosProtocolServer {
                   })),
                   note: finalConceptResults.length === 0 ? 
                     'No concepts found. Concepts need to be created first with concept_save.' : 
-                    searchQuery === '*' ? 
+                    conceptSearchQuery === '*' ? 
                     'Showing all available global concepts' : 
-                    `Found ${finalConceptResults.length} concepts matching "${searchQuery}"`
+                    `Found ${finalConceptResults.length} concepts matching "${conceptSearchQuery}"`
                 }, null, 2)
               }]
             };

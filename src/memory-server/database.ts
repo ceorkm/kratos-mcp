@@ -26,6 +26,17 @@ export interface SearchResult {
   snippet?: string;
 }
 
+export interface EnhancedSearchResult {
+  results: SearchResult[];
+  debug_info: {
+    original_query: string;
+    queries_tried: string[];
+    fallback_used?: string;
+    total_memories_scanned: number;
+    search_time_ms: number;
+  };
+}
+
 export class MemoryDatabase {
   private db: Database.Database;
   private projectId: string;
@@ -199,11 +210,186 @@ export class MemoryDatabase {
     include_expired?: boolean;
   }): SearchResult[] {
     const k = params.k || 10;
+
+    // Try primary search
+    try {
+      const results = this.executeSearch(params);
+      if (results.length > 0) {
+        return results;
+      }
+    } catch (error) {
+      // Primary search failed, try fallbacks
+      console.warn('Primary search failed, trying fallbacks:', error);
+    }
+
+    // Fallback 1: Try without special characters
+    if (params.q.match(/[^\w\s]/)) {
+      try {
+        const fallbackQuery = params.q.replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+        const results = this.executeSearch({...params, q: fallbackQuery});
+        if (results.length > 0) {
+          return results;
+        }
+      } catch (error) {
+        console.warn('Fallback 1 failed:', error);
+      }
+    }
+
+    // Fallback 2: Try individual words (OR search)
+    const words = params.q.split(/\s+/).filter(word => word.length > 2);
+    if (words.length > 1) {
+      try {
+        const orQuery = words.join(' OR ');
+        const results = this.executeSearch({...params, q: orQuery});
+        if (results.length > 0) {
+          return results;
+        }
+      } catch (error) {
+        console.warn('Fallback 2 failed:', error);
+      }
+    }
+
+    // Fallback 3: Try broader search with just the first word
+    if (words.length > 0) {
+      try {
+        const results = this.executeSearch({...params, q: words[0]});
+        return results; // Return whatever we get, even if empty
+      } catch (error) {
+        console.warn('All fallbacks failed:', error);
+      }
+    }
+
+    return []; // No results found
+  }
+
+  searchWithDebug(params: {
+    q: string;
+    k?: number;
+    require_path_match?: boolean;
+    tags?: string[];
+    include_expired?: boolean;
+  }): EnhancedSearchResult {
+    const startTime = Date.now();
+    const queries_tried: string[] = [];
+    let fallback_used: string | undefined;
+
+    // Try primary search
+    queries_tried.push(params.q);
+    try {
+      const results = this.executeSearch(params);
+      if (results.length > 0) {
+        return {
+          results,
+          debug_info: {
+            original_query: params.q,
+            queries_tried,
+            search_time_ms: Date.now() - startTime,
+            total_memories_scanned: this.getTotalMemoryCount()
+          }
+        };
+      }
+    } catch (error) {
+      // Continue to fallbacks
+    }
+
+    // Fallback 1: Try without special characters
+    if (params.q.match(/[^\w\s]/)) {
+      const fallbackQuery = params.q.replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+      queries_tried.push(fallbackQuery);
+      try {
+        const results = this.executeSearch({...params, q: fallbackQuery});
+        if (results.length > 0) {
+          return {
+            results,
+            debug_info: {
+              original_query: params.q,
+              queries_tried,
+              fallback_used: 'removed_special_chars',
+              search_time_ms: Date.now() - startTime,
+              total_memories_scanned: this.getTotalMemoryCount()
+            }
+          };
+        }
+      } catch (error) {
+        // Continue to next fallback
+      }
+    }
+
+    // Fallback 2: Try individual words (OR search)
+    const words = params.q.split(/\s+/).filter(word => word.length > 2);
+    if (words.length > 1) {
+      const orQuery = words.join(' OR ');
+      queries_tried.push(orQuery);
+      try {
+        const results = this.executeSearch({...params, q: orQuery});
+        if (results.length > 0) {
+          return {
+            results,
+            debug_info: {
+              original_query: params.q,
+              queries_tried,
+              fallback_used: 'or_search',
+              search_time_ms: Date.now() - startTime,
+              total_memories_scanned: this.getTotalMemoryCount()
+            }
+          };
+        }
+      } catch (error) {
+        // Continue to next fallback
+      }
+    }
+
+    // Fallback 3: Try broader search with just the first word
+    if (words.length > 0) {
+      queries_tried.push(words[0]);
+      try {
+        const results = this.executeSearch({...params, q: words[0]});
+        return {
+          results,
+          debug_info: {
+            original_query: params.q,
+            queries_tried,
+            fallback_used: 'broad_search',
+            search_time_ms: Date.now() - startTime,
+            total_memories_scanned: this.getTotalMemoryCount()
+          }
+        };
+      } catch (error) {
+        // All fallbacks failed
+      }
+    }
+
+    return {
+      results: [],
+      debug_info: {
+        original_query: params.q,
+        queries_tried,
+        fallback_used: 'all_failed',
+        search_time_ms: Date.now() - startTime,
+        total_memories_scanned: this.getTotalMemoryCount()
+      }
+    };
+  }
+
+  private getTotalMemoryCount(): number {
+    const stmt = this.db.prepare('SELECT COUNT(*) as count FROM memories WHERE project_id = ?');
+    const result = stmt.get(this.projectId) as any;
+    return result.count;
+  }
+
+  private executeSearch(params: {
+    q: string;
+    k?: number;
+    require_path_match?: boolean;
+    tags?: string[];
+    include_expired?: boolean;
+  }): SearchResult[] {
+    const k = params.k || 10;
     const now = Date.now();
-    
+
     // Build FTS query
     let query = `
-      SELECT 
+      SELECT
         m.*,
         bm25(mem_fts) as fts_score,
         snippet(mem_fts, 0, '[', ']', '...', 32) as snippet
@@ -223,9 +409,33 @@ export class MemoryDatabase {
 
     // Add tag filter
     if (params.tags && params.tags.length > 0) {
-      query += ' AND EXISTS (SELECT 1 FROM json_each(m.tags) WHERE value IN (' + 
+      query += ' AND EXISTS (SELECT 1 FROM json_each(m.tags) WHERE value IN (' +
         params.tags.map(() => '?').join(',') + '))';
       queryParams.push(...params.tags);
+    }
+
+    // Add path matching filter
+    if (params.require_path_match) {
+      // Extract likely file paths from search query
+      const pathTerms = params.q.split(/\s+/).filter(term =>
+        term.includes('/') || term.includes('\\') || term.includes('.')
+      );
+
+      if (pathTerms.length > 0) {
+        // Look for any path term in the paths JSON array
+        const pathConditions = pathTerms.map(() =>
+          'EXISTS (SELECT 1 FROM json_each(m.paths) WHERE value LIKE ?)'
+        ).join(' OR ');
+        query += ` AND (${pathConditions})`;
+
+        // Add wildcard patterns for each path term
+        pathTerms.forEach(term => {
+          queryParams.push(`%${term}%`);
+        });
+      } else {
+        // If no path-like terms found but path match required, return empty
+        return [];
+      }
     }
 
     query += ' ORDER BY fts_score DESC, m.importance DESC, m.created_at DESC LIMIT ?';
@@ -280,17 +490,49 @@ export class MemoryDatabase {
   // Get a single memory by ID with full text
   get(id: string): Memory | null {
     const stmt = this.db.prepare(`
-      SELECT * FROM memories 
+      SELECT * FROM memories
       WHERE id = ? AND project_id = ?
     `);
-    
+
     const result = stmt.get(id, this.projectId) as any;
-    
+
     if (!result) {
       return null;
     }
-    
+
     return this.rowToMemory(result);
+  }
+
+  // Get multiple memories by IDs (bulk operation)
+  getMultiple(ids: string[]): { [id: string]: Memory | null } {
+    const result: { [id: string]: Memory | null } = {};
+
+    if (ids.length === 0) {
+      return result;
+    }
+
+    // Build query with placeholders for all IDs
+    const placeholders = ids.map(() => '?').join(',');
+    const stmt = this.db.prepare(`
+      SELECT * FROM memories
+      WHERE id IN (${placeholders}) AND project_id = ?
+    `);
+
+    const queryParams = [...ids, this.projectId];
+    const results = stmt.all(...queryParams) as any[];
+
+    // Initialize all IDs as null (not found)
+    ids.forEach(id => {
+      result[id] = null;
+    });
+
+    // Fill in found memories
+    results.forEach(row => {
+      const memory = this.rowToMemory(row);
+      result[memory.id] = memory;
+    });
+
+    return result;
   }
 
   forget(id: string): { ok: boolean; message?: string } {
@@ -386,6 +628,159 @@ export class MemoryDatabase {
     }
   }
 
+  searchPreview(params: {
+    q: string;
+    k?: number;
+    require_path_match?: boolean;
+    tags?: string[];
+    include_expired?: boolean;
+  }): {
+    preview: {
+      would_return: number;
+      search_explanation: string;
+      query_breakdown: {
+        original: string;
+        processed: string;
+        terms: string[];
+        filters_applied: string[];
+      };
+      match_examples: Array<{
+        summary: string;
+        match_reason: string;
+        score_estimate: string;
+      }>;
+    };
+    suggestions: string[];
+  } {
+    const startTime = Date.now();
+    const now = Date.now();
+    const k = params.k || 10;
+
+    // Process query the same way as real search
+    const escapedQuery = this.escapeQuery(params.q);
+    const terms = params.q.toLowerCase().split(/\s+/).filter(t => t.length > 0);
+
+    let filtersApplied: string[] = [];
+    let baseQuery = `
+      SELECT COUNT(*) as total_matches,
+             m.summary,
+             bm25(mem_fts) as fts_score,
+             snippet(mem_fts, 0, '[', ']', '...', 32) as snippet
+      FROM memories m
+      JOIN mem_fts ON m.rowid = mem_fts.rowid
+      WHERE mem_fts MATCH ?
+        AND m.project_id = ?
+    `;
+
+    let queryParams: any[] = [escapedQuery, this.projectId];
+
+    // Apply filters same as real search
+    if (!params.include_expired) {
+      baseQuery += ' AND (m.expires_at IS NULL OR m.expires_at > ?)';
+      queryParams.push(now);
+      filtersApplied.push('Excluding expired memories');
+    }
+
+    if (params.tags && params.tags.length > 0) {
+      const tagConditions = params.tags.map(() => 'json_extract(m.tags, ?) IS NOT NULL').join(' AND ');
+      baseQuery += ` AND (${tagConditions})`;
+      params.tags.forEach((tag, i) => queryParams.push(`$[${i}]`));
+      filtersApplied.push(`Filtering by tags: ${params.tags.join(', ')}`);
+    }
+
+    if (params.require_path_match) {
+      const cwd = process.cwd();
+      const relativeCwd = cwd.replace(process.env.HOME || '', '~');
+      baseQuery += ` AND (
+        json_extract(m.paths, '$') LIKE '%' || ? || '%' OR
+        json_extract(m.paths, '$') LIKE '%' || ? || '%'
+      )`;
+      queryParams.push(cwd, relativeCwd);
+      filtersApplied.push(`Requiring path match for current directory`);
+    }
+
+    // Get total count and sample results
+    const countStmt = this.db.prepare(baseQuery.replace('m.summary,', '').replace(', bm25(mem_fts) as fts_score', '').replace(', snippet(mem_fts, 0, \'[\', \']\', \'...\', 32) as snippet', ''));
+    const sampleStmt = this.db.prepare(baseQuery + ` ORDER BY bm25(mem_fts) LIMIT 3`);
+
+    let totalMatches = 0;
+    let sampleResults: any[] = [];
+
+    try {
+      const countResult = countStmt.get(...queryParams) as any;
+      totalMatches = countResult?.total_matches || 0;
+
+      if (totalMatches > 0) {
+        sampleResults = sampleStmt.all(...queryParams) as any[];
+      }
+    } catch (error) {
+      // Query failed - try fallback explanations
+      const suggestions = [
+        'Try removing special characters or using simpler terms',
+        'Check if memories exist with: memory_get_recent',
+        `Query failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      ];
+
+      return {
+        preview: {
+          would_return: 0,
+          search_explanation: `Search would fail with error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          query_breakdown: {
+            original: params.q,
+            processed: escapedQuery,
+            terms: terms,
+            filters_applied: filtersApplied
+          },
+          match_examples: []
+        },
+        suggestions: suggestions
+      };
+    }
+
+    // Create explanation
+    let explanation = `Search for "${params.q}" would return ${Math.min(totalMatches, k)} of ${totalMatches} total matches.`;
+    if (filtersApplied.length > 0) {
+      explanation += ` Filters: ${filtersApplied.join(', ')}.`;
+    }
+
+    const matchExamples = sampleResults.map((r, i) => ({
+      summary: r.summary || 'No summary',
+      match_reason: `Matched terms: ${terms.filter(term =>
+        r.summary?.toLowerCase().includes(term) || r.snippet?.toLowerCase().includes(term)
+      ).join(', ') || 'FTS match'}`,
+      score_estimate: r.fts_score > -1 ? 'High relevance' : r.fts_score > -3 ? 'Medium relevance' : 'Low relevance'
+    }));
+
+    const suggestions: string[] = [];
+    if (totalMatches === 0) {
+      suggestions.push('Try removing special characters or using broader terms');
+      suggestions.push('Check if memories exist with: memory_get_recent');
+      if (params.require_path_match) {
+        suggestions.push('Try without require_path_match to search all memories');
+      }
+      if (params.tags && params.tags.length > 0) {
+        suggestions.push('Try without tag filters to broaden search');
+      }
+    } else if (totalMatches < k) {
+      suggestions.push(`Consider using broader terms to find more than ${totalMatches} results`);
+    }
+
+    return {
+      preview: {
+        would_return: Math.min(totalMatches, k),
+        search_explanation: explanation,
+        query_breakdown: {
+          original: params.q,
+          processed: escapedQuery,
+          terms: terms,
+          filters_applied: filtersApplied
+        },
+        match_examples: matchExamples
+      },
+      suggestions: suggestions
+    };
+  }
+
   private generateId(): string {
     return `mem_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
   }
@@ -396,8 +791,20 @@ export class MemoryDatabase {
   }
 
   private escapeQuery(query: string): string {
-    // Escape FTS5 special characters
-    return query.replace(/["]/g, '""');
+    // Escape FTS5 special characters and wrap in double quotes for phrase search
+    // This prevents "grably-desktop" from being interpreted as "grably MINUS desktop"
+    const cleaned = query
+      .replace(/["]/g, '""')           // Escape existing quotes
+      .replace(/[^\w\s]/g, ' ')        // Replace special chars with spaces
+      .replace(/\s+/g, ' ')            // Normalize whitespace
+      .trim();
+
+    // If query contains spaces or was modified, wrap in quotes for phrase search
+    if (cleaned !== query || cleaned.includes(' ')) {
+      return `"${cleaned}"`;
+    }
+
+    return cleaned;
   }
 
   private rowToMemory(row: any): Memory {
