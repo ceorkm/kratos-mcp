@@ -740,12 +740,27 @@ class KratosProtocolServer {
             };
 
           case 'memory_search':
+            // Additional safety check for database
+            if (!this.memoryDb) {
+              return {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify({
+                    search_scope: 'project (no active project)',
+                    count: 0,
+                    results: [],
+                    error: 'No memory database initialized. Try saving a memory first to initialize the project.'
+                  }, null, 2)
+                }]
+              };
+            }
+
             const scope = (args as any)?.scope || 'project';
             const projectInfo = await this.projectManager.detectProject(process.cwd());
 
             if ((args as any)?.debug) {
               // Use enhanced search with debug info
-              const enhancedResults = this.memoryDb!.searchWithDebug(args as any);
+              const enhancedResults = this.memoryDb.searchWithDebug(args as any);
               return {
                 content: [{
                   type: 'text',
@@ -772,7 +787,7 @@ class KratosProtocolServer {
               };
             } else {
               // Regular search
-              const searchResults = this.memoryDb!.search(args as any);
+              const searchResults = this.memoryDb.search(args as any);
               return {
                 content: [{
                   type: 'text',

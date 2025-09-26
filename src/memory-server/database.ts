@@ -416,14 +416,19 @@ export class MemoryDatabase {
 
     // Add path matching filter
     if (params.require_path_match) {
-      // Filter by current working directory (like searchPreview does)
+      // Filter by paths that exist relative to current working directory
       const cwd = process.cwd();
-      const relativeCwd = cwd.replace(process.env.HOME || '', '~');
-      query += ` AND (
-        json_extract(m.paths, '$') LIKE '%' || ? || '%' OR
-        json_extract(m.paths, '$') LIKE '%' || ? || '%'
+
+      // Use EXISTS to check if any path in the JSON array exists relative to cwd
+      query += ` AND EXISTS (
+        SELECT 1 FROM json_each(m.paths) as path_item
+        WHERE
+          -- Check if it's an absolute path under cwd
+          (path_item.value LIKE ? || '%') OR
+          -- Check if it's a relative path that exists from cwd
+          (path_item.value NOT LIKE '/%' AND path_item.value NOT LIKE 'C:%' AND path_item.value NOT LIKE '~%')
       )`;
-      queryParams.push(cwd, relativeCwd);
+      queryParams.push(cwd + '/');
     }
 
     query += ' ORDER BY fts_score DESC, m.importance DESC, m.created_at DESC LIMIT ?';
@@ -678,12 +683,13 @@ export class MemoryDatabase {
 
     if (params.require_path_match) {
       const cwd = process.cwd();
-      const relativeCwd = cwd.replace(process.env.HOME || '', '~');
-      baseQuery += ` AND (
-        json_extract(m.paths, '$') LIKE '%' || ? || '%' OR
-        json_extract(m.paths, '$') LIKE '%' || ? || '%'
+      baseQuery += ` AND EXISTS (
+        SELECT 1 FROM json_each(m.paths) as path_item
+        WHERE
+          (path_item.value LIKE ? || '%') OR
+          (path_item.value NOT LIKE '/%' AND path_item.value NOT LIKE 'C:%' AND path_item.value NOT LIKE '~%')
       )`;
-      queryParams.push(cwd, relativeCwd);
+      queryParams.push(cwd + '/');
       filtersApplied.push(`Requiring path match for current directory`);
     }
 
@@ -723,15 +729,22 @@ export class MemoryDatabase {
 
     if (params.require_path_match) {
       const cwd = process.cwd();
-      const relativeCwd = cwd.replace(process.env.HOME || '', '~');
-      countQuery += ` AND (
-        json_extract(m.paths, '$') LIKE '%' || ? || '%' OR
-        json_extract(m.paths, '$') LIKE '%' || ? || '%'
+
+      countQuery += ` AND EXISTS (
+        SELECT 1 FROM json_each(m.paths) as path_item
+        WHERE
+          (path_item.value LIKE ? || '%') OR
+          (path_item.value NOT LIKE '/%' AND path_item.value NOT LIKE 'C:%' AND path_item.value NOT LIKE '~%')
       )`;
-      sampleQuery += ` AND (
-        json_extract(m.paths, '$') LIKE '%' || ? || '%' OR
-        json_extract(m.paths, '$') LIKE '%' || ? || '%'
+      countParams.push(cwd + '/');
+
+      sampleQuery += ` AND EXISTS (
+        SELECT 1 FROM json_each(m.paths) as path_item
+        WHERE
+          (path_item.value LIKE ? || '%') OR
+          (path_item.value NOT LIKE '/%' AND path_item.value NOT LIKE 'C:%' AND path_item.value NOT LIKE '~%')
       )`;
+      sampleParams.push(cwd + '/');
     }
 
     sampleQuery += ` ORDER BY bm25(mem_fts) LIMIT 3`;
