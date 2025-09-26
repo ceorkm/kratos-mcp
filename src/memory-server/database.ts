@@ -416,26 +416,14 @@ export class MemoryDatabase {
 
     // Add path matching filter
     if (params.require_path_match) {
-      // Extract likely file paths from search query
-      const pathTerms = params.q.split(/\s+/).filter(term =>
-        term.includes('/') || term.includes('\\') || term.includes('.')
-      );
-
-      if (pathTerms.length > 0) {
-        // Look for any path term in the paths JSON array
-        const pathConditions = pathTerms.map(() =>
-          'EXISTS (SELECT 1 FROM json_each(m.paths) WHERE value LIKE ?)'
-        ).join(' OR ');
-        query += ` AND (${pathConditions})`;
-
-        // Add wildcard patterns for each path term
-        pathTerms.forEach(term => {
-          queryParams.push(`%${term}%`);
-        });
-      } else {
-        // If no path-like terms found but path match required, return empty
-        return [];
-      }
+      // Filter by current working directory (like searchPreview does)
+      const cwd = process.cwd();
+      const relativeCwd = cwd.replace(process.env.HOME || '', '~');
+      query += ` AND (
+        json_extract(m.paths, '$') LIKE '%' || ? || '%' OR
+        json_extract(m.paths, '$') LIKE '%' || ? || '%'
+      )`;
+      queryParams.push(cwd, relativeCwd);
     }
 
     query += ' ORDER BY fts_score DESC, m.importance DESC, m.created_at DESC LIMIT ?';

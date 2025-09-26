@@ -1413,11 +1413,20 @@ class KratosProtocolServer {
     };
 
     if (this.memoryDb) {
-      const recentMemories = this.memoryDb.getRecent({ k: 5 });
-      status.stats = {
-        recentMemoryCount: recentMemories.length,
-        lastMemoryCreated: recentMemories[0]?.created_at || null,
-      };
+      try {
+        const recentMemories = this.memoryDb.getRecent({ k: 5 });
+        status.stats = {
+          recentMemoryCount: recentMemories.length,
+          lastMemoryCreated: recentMemories[0]?.created_at || null,
+        };
+      } catch (error) {
+        // Database might not be initialized yet or table doesn't exist
+        status.stats = {
+          recentMemoryCount: 0,
+          lastMemoryCreated: null,
+          error: 'Database not initialized or no memories table'
+        };
+      }
     }
 
     if (this.dataRetention) {
