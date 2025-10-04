@@ -244,4 +244,29 @@ export class ProjectManager {
       logger.error('Failed to save projects cache:', error);
     }
   }
+
+  /**
+   * Get current Kratos home directory
+   */
+  getKratosHome(): string {
+    return this.kratosHome;
+  }
+
+  /**
+   * Dynamically update Kratos home directory
+   */
+  async updateKratosHome(newPath: string): Promise<void> {
+    this.kratosHome = newPath;
+
+    // Ensure the new directory exists
+    await fs.ensureDir(this.kratosHome);
+
+    // Clear cache as project paths may have changed
+    this.projectsCache.clear();
+
+    // Reload cache from new location
+    this.loadProjectsCache();
+
+    logger.info(`Updated Kratos home to: ${this.kratosHome}`);
+  }
 }

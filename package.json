@@ -1,6 +1,6 @@
 {
   "name": "kratos-mcp",
-  "version": "1.5.3",
+  "version": "1.6.1",
   "description": "Memory System for AI Coding Tools - MCP server with perfect project isolation",
   "main": "dist/index.js",
   "type": "module",

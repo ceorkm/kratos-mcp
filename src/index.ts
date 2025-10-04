@@ -683,7 +683,20 @@ class KratosProtocolServer {
             properties: {},
           },
         },
-        
+        {
+          name: 'change_storage_path',
+          description: 'Dynamically change where Kratos stores data (with automatic migration)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              newPath: { type: 'string', description: 'New storage path (e.g., "/opt/kratos" or ".kratos")' },
+              migrate: { type: 'boolean', description: 'Migrate existing data to new location (default: true)' },
+              backup: { type: 'boolean', description: 'Create backup before migration (default: true)' },
+            },
+            required: ['newPath'],
+          },
+        },
+
         // System Management
         {
           name: 'system_status',
@@ -1268,6 +1281,28 @@ class KratosProtocolServer {
               }]
             };
 
+          case 'change_storage_path':
+            const { newPath, migrate = true, backup = true } = (args || {}) as {
+              newPath: string;
+              migrate?: boolean;
+              backup?: boolean;
+            };
+
+            try {
+              const result = await this.changeStoragePath(newPath, { migrate, backup });
+              return {
+                content: [{
+                  type: 'text',
+                  text: JSON.stringify(result, null, 2)
+                }]
+              };
+            } catch (error) {
+              throw new McpError(
+                ErrorCode.InternalError,
+                `Failed to change storage path: ${error instanceof Error ? error.message : 'Unknown error'}`
+              );
+            }
+
           // System operations
           case 'system_status':
             const status = await this.getSystemStatus();
@@ -1449,6 +1484,118 @@ class KratosProtocolServer {
     }
 
     return status;
+  }
+
+  /**
+   * Dynamically change storage path with automatic data migration
+   */
+  private async changeStoragePath(newPath: string, options: {
+    migrate?: boolean;
+    backup?: boolean;
+  } = {}): Promise<any> {
+    const { migrate = true, backup = true } = options;
+
+    // Resolve the new path (handle relative paths)
+    const resolvedNewPath = path.isAbsolute(newPath)
+      ? newPath
+      : path.resolve(process.cwd(), newPath);
+
+    // Get current storage path
+    const currentPath = this.projectManager.getKratosHome();
+
+    if (currentPath === resolvedNewPath) {
+      return {
+        success: true,
+        message: 'Already using the specified storage path',
+        currentPath,
+        newPath: resolvedNewPath
+      };
+    }
+
+    logger.info(`Changing storage path from ${currentPath} to ${resolvedNewPath}`);
+
+    try {
+      // Step 1: Create new directory
+      await fs.ensureDir(resolvedNewPath);
+
+      let migratedData = null;
+
+      if (migrate && await fs.pathExists(currentPath)) {
+        // Step 2: Create backup if requested
+        if (backup) {
+          const backupPath = `${currentPath}.backup.${Date.now()}`;
+          await fs.copy(currentPath, backupPath);
+          logger.info(`Created backup at: ${backupPath}`);
+        }
+
+        // Step 3: Migrate data
+        logger.info('Migrating data to new location...');
+        await fs.copy(currentPath, resolvedNewPath);
+
+        // Count migrated items
+        const projects = await this.countProjectsInPath(resolvedNewPath);
+        migratedData = { projects };
+
+        logger.info(`Migrated ${projects} projects to new location`);
+      }
+
+      // Step 4: Update project manager to use new path
+      await this.projectManager.updateKratosHome(resolvedNewPath);
+
+      // Step 5: Reinitialize databases with new path
+      await this.reinitializeDatabases();
+
+      return {
+        success: true,
+        message: 'Storage path changed successfully',
+        previousPath: currentPath,
+        newPath: resolvedNewPath,
+        migrated: migrate,
+        backup: backup,
+        migratedData
+      };
+
+    } catch (error) {
+      logger.error('Failed to change storage path:', error);
+      throw new Error(`Storage path change failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Count projects in a storage path
+   */
+  private async countProjectsInPath(storagePath: string): Promise<number> {
+    try {
+      const projectsDir = path.join(storagePath, 'projects');
+      if (!await fs.pathExists(projectsDir)) return 0;
+
+      const entries = await fs.readdir(projectsDir);
+      return entries.length;
+    } catch (error) {
+      return 0;
+    }
+  }
+
+  /**
+   * Reinitialize databases after path change
+   */
+  private async reinitializeDatabases(): Promise<void> {
+    // Close existing connections
+    if (this.memoryDb) {
+      this.memoryDb.close();
+      this.memoryDb = null;
+    }
+    if (this.conceptStore) {
+      this.conceptStore.close();
+      this.conceptStore = null;
+    }
+    if (this.contextBroker) {
+      this.contextBroker.close();
+      this.contextBroker = null;
+    }
+
+    // Databases will be re-initialized lazily on next use
+    logger.info('Databases reinitialized for new storage path');
   }
 
   async run() {
