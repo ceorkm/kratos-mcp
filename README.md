@@ -1,408 +1,256 @@
 <div align="center">
 
-# 🏛️ Kratos MCP
+```
+  ██╗  ██╗██████╗  █████╗ ████████╗ ██████╗ ███████╗
+  ██║ ██╔╝██╔══██╗██╔══██╗╚══██╔══╝██╔═══██╗██╔════╝
+  █████╔╝ ██████╔╝███████║   ██║   ██║   ██║███████╗
+  ██╔═██╗ ██╔══██╗██╔══██║   ██║   ██║   ██║╚════██║
+  ██║  ██╗██║  ██║██║  ██║   ██║   ╚██████╔╝███████║
+  ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚══════╝
+```
 
-### Ultra-Lean Memory System for AI Coding Tools
+### The God of War remembers everything.
 
 [![npm version](https://img.shields.io/npm/v/kratos-mcp.svg)](https://www.npmjs.com/package/kratos-mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-green.svg)](https://modelcontextprotocol.io)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 
-**Never explain your codebase again. Let AI remember everything.**
+**Persistent memory for AI coding agents. CLI-first. Auto-capture. Encrypted. Zero network calls.**
 
-🌐 **[kratos-mcp.com](https://kratos-mcp.com)** • [Installation](#-installation) • [Quick Start](#-quick-start) • [Features](#-features) • [Tools](#-available-tools)
+[Installation](#installation) · [Quick Start](#quick-start) · [Commands](#commands) · [Plugin](#plugin-mode) · [Security](#security)
 
 </div>
 
 ---
 
-## 🎯 Why Kratos?
+## What is Kratos?
 
-After building 30+ production apps with AI, we discovered a critical problem: **AI tools forget everything between sessions**. You explain your architecture, your patterns, your decisions—and tomorrow, you explain it all again.
+AI coding tools forget everything between sessions. You explain your architecture, your patterns, your decisions — and tomorrow, you explain it all again.
 
-Kratos MCP solves this with an **ultra-lean memory system** that gives AI perfect recall of your project—with minimal context overhead.
+Kratos gives your AI agent **permanent memory**. It auto-captures what happens during coding sessions and recalls relevant context when you start a new one. No manual work. No setup. Just install and code.
 
-## ✨ Features
+```
+Session 1: You build auth with JWT → Kratos remembers
+Session 2: "How does auth work?" → Kratos recalls instantly
+```
 
-<table>
-<tr>
-<td width="50%">
-
-### 🔒 **100% Project Isolation**
-Each project gets its own SQLite database. No cross-contamination. Ever.
-
-</td>
-<td width="50%">
-
-### ⚡ **Zero Configuration**
-Auto-detects projects via git, package.json, or directory structure. Just install and code.
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-### 🪶 **Ultra-Lean Architecture**
-Just 12 essential tools. 64% smaller context footprint than competitors.
-
-</td>
-<td width="50%">
-
-### 🌍 **Universal Protocol**
-Works with Claude, Cursor, Windsurf, Continue—any MCP-compatible tool.
-
-</td>
-</tr>
-</table>
-
-## 🚀 Installation
+## Installation
 
 ```bash
-# Install globally
 npm install -g kratos-mcp
-
-# Or run directly with npx (no installation required)
-npx kratos-mcp
-
-# Or install as a dependency
-npm install kratos-mcp
 ```
 
-## 🎬 Quick Start
+That's it. Kratos auto-detects your project from `.git`, `package.json`, `Cargo.toml`, `go.mod`, or `pyproject.toml`.
 
-### 1️⃣ Configure Your AI Tool
-
-<details>
-<summary><b>Claude Desktop</b></summary>
-
-Add to your Claude Desktop config file:
-- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
-- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
-- **Linux**: `~/.config/claude/claude_desktop_config.json`
-
-```json
-{
-  "mcpServers": {
-    "kratos": {
-      "command": "npx",
-      "args": ["--yes", "kratos-mcp@latest"]
-    }
-  }
-}
-```
-
-Or if you have it installed globally:
-```json
-{
-  "mcpServers": {
-    "kratos": {
-      "command": "kratos-mcp",
-      "args": []
-    }
-  }
-}
-```
-</details>
-
-<details>
-<summary><b>Claude Code (Anthropic's VSCode Extension)</b></summary>
-
-Run this command in your terminal:
+## Quick Start
 
 ```bash
-claude mcp add kratos -- npx --yes kratos-mcp@latest
+# Save a memory
+kratos save "Auth uses JWT with RS256, refresh tokens in httpOnly cookies" --tags auth,jwt --importance 5
+
+# Search memories
+kratos search "authentication"
+
+# Ask in natural language
+kratos ask "how does the auth system work?"
+
+# See what Kratos knows
+kratos status
 ```
 
-Or for global installation:
+**Output:**
+
+```
+  KRATOS — Memory System
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ACTIVE PROJECT
+  ● my-app
+
+  MEMORY STATS
+    Total:       47
+    Last saved:  3/15/2026, 2:16:21 PM
+    Importance:
+      5 ████████████████████ 12
+      4 █████████████░░░░░░░ 8
+      3 ████████░░░░░░░░░░░░ 5
+      2 ██████░░░░░░░░░░░░░░ 4
+      1 ░░░░░░░░░░░░░░░░░░░░ 0
+
+  TOP TAGS
+    #auth(5)  #database(4)  #api(3)  #frontend(2)
+
+  FEATURES
+    ● FTS5 Full-Text Search
+    ● AES-256-GCM Encryption
+    ● PII/Secret Detection
+    ● Smart Compression
+    ● Auto-Capture Hooks
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `kratos save <text>` | Save a memory (`--tags`, `--importance 1-5`, `--paths`, `--compress`) |
+| `kratos search <query>` | Full-text search (`--limit`, `--tags`, `--debug`) |
+| `kratos ask <question>` | Natural language query |
+| `kratos recent` | Recent memories (`--limit`) |
+| `kratos get <id>` | Full memory details |
+| `kratos forget <id>` | Delete a memory |
+| `kratos status` | System dashboard |
+| `kratos switch <path>` | Switch project |
+| `kratos scan <text>` | Detect PII/secrets (`--redact`) |
+| `kratos migrate` | Verify existing data for CLI use |
+| `kratos hooks install` | Install auto-capture hooks for Claude Code |
+| `kratos hooks uninstall` | Remove hooks |
+
+## Plugin Mode
+
+Kratos works as a **Claude Code plugin** for fully automatic memory capture. No manual commands needed — everything happens in the background.
+
+### Install as Plugin
 
 ```bash
-# First install globally
-npm install -g kratos-mcp@latest
-
-# Then add to Claude Code
-claude mcp add kratos -- kratos-mcp
+claude --plugin-dir ./plugin
 ```
 
-See [Claude Code MCP docs](https://docs.anthropic.com/claude-code/mcp) for more info.
-</details>
+### What Happens Automatically
 
-<details>
-<summary><b>Cursor</b></summary>
+| Event | Action |
+|-------|--------|
+| **Session starts** | Loads recent memories into Claude's context |
+| **You edit a file** | Captures what changed, saves as memory |
+| **You run a command** | Captures the command and result |
+| **Session ends** | Claude summarizes the session (using the host LLM — free, no API key) and saves it |
 
-Add to `.cursor/mcp_config.json` in your project root:
+The plugin uses Claude Code's built-in `type: "prompt"` hook — Claude itself compresses your session memories. No external AI, no Ollama, no API keys, no network calls.
 
-```json
-{
-  "mcpServers": {
-    "kratos": {
-      "command": "npx",
-      "args": ["--yes", "kratos-mcp@latest"]
-    }
-  }
-}
-```
-</details>
-
-<details>
-<summary><b>Other MCP Tools</b></summary>
-
-Kratos works with any tool supporting the Model Context Protocol. The general format is:
-
-```json
-{
-  "command": "npx",
-  "args": ["kratos-mcp"]
-}
-```
-
-**Compatible with:** Windsurf, Cline, BoltAI, Augment Code, Roo Code, Zencoder, Amazon Q, Qodo Gen, JetBrains AI, Warp, Opencode, Continue.dev, Zed, and more!
-
-Check your tool's documentation for specific MCP server configuration location.
-
-</details>
-
-### 2️⃣ Start Using Kratos
-
-```typescript
-// Your AI now remembers:
-// ✓ Your authentication patterns
-// ✓ Your API structure
-// ✓ Your component architecture
-// ✓ Your coding standards
-// ✓ Every decision you've made
-```
-
-## 🛠️ Available Tools
-
-Kratos provides **12 ultra-lean tools** optimized for minimal context consumption:
-
-### 💾 Memory Management (7 tools)
-
-<table>
-<tr>
-<th>Tool</th>
-<th>Description</th>
-</tr>
-<tr>
-<td><code>memory_save</code></td>
-<td>Store important project knowledge with tags, paths, and importance levels</td>
-</tr>
-<tr>
-<td><code>memory_search</code></td>
-<td>Smart semantic search with debug mode and path matching</td>
-</tr>
-<tr>
-<td><code>memory_ask</code></td>
-<td>Natural language queries about your memories</td>
-</tr>
-<tr>
-<td><code>memory_get_recent</code></td>
-<td>Get recently created memories with filtering</td>
-</tr>
-<tr>
-<td><code>memory_get</code></td>
-<td>Retrieve a specific memory by ID</td>
-</tr>
-<tr>
-<td><code>memory_get_multiple</code></td>
-<td>Bulk retrieve multiple memories</td>
-</tr>
-<tr>
-<td><code>memory_forget</code></td>
-<td>Delete a memory by ID</td>
-</tr>
-</table>
-
-### 🔒 Security (1 tool)
-
-<table>
-<tr>
-<th>Tool</th>
-<th>Description</th>
-</tr>
-<tr>
-<td><code>security_scan</code></td>
-<td>Scan text for PII and secrets before saving</td>
-</tr>
-</table>
-
-### 📁 Project Management (3 tools)
-
-<table>
-<tr>
-<th>Tool</th>
-<th>Description</th>
-</tr>
-<tr>
-<td><code>project_switch</code></td>
-<td>Switch between different projects</td>
-</tr>
-<tr>
-<td><code>project_current</code></td>
-<td>Get current active project info</td>
-</tr>
-<tr>
-<td><code>change_storage_path</code></td>
-<td>Dynamically change storage location with automatic data migration</td>
-</tr>
-</table>
-
-### ⚙️ System (1 tool)
-
-<table>
-<tr>
-<th>Tool</th>
-<th>Description</th>
-</tr>
-<tr>
-<td><code>system_status</code></td>
-<td>Get system status and memory statistics</td>
-</tr>
-</table>
-
-## 📊 How It Works
-
-```mermaid
-graph LR
-    A[Your Code] --> B[Kratos MCP]
-    B --> C{Project Detection}
-    C --> D[SQLite Database]
-    D --> E[Memory Storage]
-    E --> F[AI Tool]
-    F --> G[Perfect Context]
-```
-
-## 🔬 Under the Hood
-
-- **SQLite + FTS5**: Lightning-fast full-text search
-- **Smart Scoring**: Path matching + recency + importance
-- **Auto-detection**: Git, package.json, or directory-based
-- **Secure**: All data stays local, no external calls
-- **Lean**: Only 4 core components, minimal memory footprint
-
-## 📈 Performance
-
-<table>
-<tr>
-<th>Metric</th>
-<th>Value</th>
-</tr>
-<tr>
-<td>Context Overhead</td>
-<td>64% smaller than v3</td>
-</tr>
-<tr>
-<td>Memory Retrieval</td>
-<td>&lt; 10ms</td>
-</tr>
-<tr>
-<td>Project Switch</td>
-<td>&lt; 100ms</td>
-</tr>
-<tr>
-<td>Storage Overhead</td>
-<td>~2MB per project</td>
-</tr>
-</table>
-
-## 🗂️ Memory Structure
+### Plugin Structure
 
 ```
-~/.kratos/                       # Default storage location
+plugin/
+  .claude-plugin/plugin.json      # Manifest
+  hooks/hooks.json                # Lifecycle hooks (PostToolUse, Stop, etc.)
+  skills/kratos-memory/SKILL.md   # Teaches Claude how to use kratos
+  scripts/                        # Hook handlers
+  .mcp.json                       # MCP server (backward compat)
+```
+
+## Security
+
+Kratos was built with security as a core feature, not an afterthought.
+
+| Feature | Detail |
+|---------|--------|
+| **AES-256-GCM Encryption** | Memories encrypted at rest with per-project keys |
+| **PII Detection** | Auto-detects SSN, credit cards, emails, phone numbers, IPs, DOB |
+| **Secret Detection** | Catches API keys, AWS keys, GitHub tokens, JWTs, private keys, passwords |
+| **Project Isolation** | Each project has its own SQLite database — zero cross-contamination |
+| **Zero Network Calls** | Nothing leaves your machine. Ever. No telemetry, no analytics, no cloud. |
+| **Key Rotation** | Rotate encryption keys without data loss |
+
+```bash
+# Scan text before saving
+kratos scan "My API key is sk-1234abcd..." --redact
+
+# Output:
+# ✗ Secrets detected!
+#   ● API Key (secret, confidence: 0.9)
+# Redacted: My API key is sk-[REDACTED_SECRET]...
+```
+
+## How It Works
+
+```
+You code with Claude
+        ↓
+  PostToolUse hook fires (auto)
+        ↓
+  Observation captured + compressed
+        ↓
+  Saved to per-project SQLite + FTS5
+        ↓
+  Next session starts
+        ↓
+  SessionStart hook loads recent context
+        ↓
+  Claude knows what happened last time
+```
+
+**Performance:**
+
+| Metric | Value |
+|--------|-------|
+| Memory retrieval | < 10ms |
+| Project switch | < 100ms |
+| Storage per project | ~2MB |
+| Search engine | SQLite FTS5 (porter tokenizer) |
+
+## Data Storage
+
+```
+~/.kratos/
 ├── projects/
-│   ├── project-id-1/
-│   │   └── memories.db          # SQLite database with FTS5
-│   └── project-id-2/
-│       └── memories.db
-└── global/
-    └── global.db                # Shared knowledge (optional)
+│   ├── proj_abc123/
+│   │   ├── databases/
+│   │   │   └── memories.db        # SQLite + FTS5
+│   │   ├── sessions/
+│   │   │   └── current.json       # Active session buffer
+│   │   └── project.json           # Project metadata
+│   └── proj_def456/
+│       └── ...
+├── .keys/
+│   └── proj_abc123.key            # AES-256 encryption key
+└── projects.json                  # Project registry
 ```
 
-**New in v1.6.1:** Use `change_storage_path` to move data to custom locations like `/opt/kratos` or `.kratos` for per-project storage.
+Each project is completely isolated. Different database, different encryption key, different everything.
 
-## 💡 Example Usage
+## MCP Support (Deprecated)
 
-```typescript
-// Save a memory
-await memory_save({
-  summary: "JWT auth implementation",
-  text: "We use httpOnly cookies with refresh tokens...",
-  tags: ["auth", "security"],
-  paths: ["src/middleware/auth.ts"],
-  importance: 5
-});
+> **Note:** MCP support is deprecated and will be removed in a future version. The CLI and plugin are the recommended interfaces going forward. MCP consumed too much context per tool call.
 
-// Search memories
-await memory_search({
-  q: "authentication",
-  k: 5,
-  debug: true  // Get search insights
-});
-
-// Ask natural language questions
-await memory_ask({
-  question: "How does our auth system work?",
-  limit: 10
-});
-
-// Change storage location
-await change_storage_path({
-  newPath: "/opt/kratos",
-  migrate: true,
-  backup: true
-});
-```
-
-## 🎮 Live Demo
-
-```typescript
-// User: "Explain the auth system"
-//
-// Kratos automatically retrieves:
-// ✓ JWT implementation from 2 weeks ago
-// ✓ Middleware configuration from last month
-// ✓ User model structure from initial setup
-//
-// AI Response: "Your auth uses JWT with refresh tokens
-// stored in httpOnly cookies. The middleware validates
-// tokens on protected routes at /api/middleware/auth.ts:42..."
-```
-
-## 🤝 Contributing
-
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+If you still need MCP mode:
 
 ```bash
-# Clone the repo
-git clone https://github.com/ceorkm/kratos-mcp.git
-
-# Install dependencies
-npm install
-
-# Build
-npm run build
-
-# Run in development
-npm run dev
+kratos mcp
 ```
 
-## 📄 License
+Or in your MCP client config:
+```json
+{
+  "mcpServers": {
+    "kratos": {
+      "command": "npx",
+      "args": ["kratos-mcp"]
+    }
+  }
+}
+```
 
-MIT © 2025 Kratos MCP Contributors
+Existing MCP users: run `kratos migrate` to verify your data works with the CLI. No data copy needed — same database format.
 
-## 🙏 Acknowledgments
+## Contributing
 
-Built on the [Model Context Protocol](https://modelcontextprotocol.io) by Anthropic.
+```bash
+git clone https://github.com/ceorkm/kratos-mcp.git
+cd kratos-mcp
+npm install
+npm run build
+npm run cli   # Run CLI in dev mode
+```
 
-Inspired by real-world experience building production apps with AI.
+## License
+
+MIT
 
 ---
 
 <div align="center">
 
-**Built for developers who value their time.**
+**Built for developers who are tired of repeating themselves.**
 
-[Report Bug](https://github.com/ceorkm/kratos-mcp/issues) • [Request Feature](https://github.com/ceorkm/kratos-mcp/issues) • [Documentation](https://github.com/ceorkm/kratos-mcp#readme)
+[Report Bug](https://github.com/ceorkm/kratos-mcp/issues) · [Request Feature](https://github.com/ceorkm/kratos-mcp/issues)
 
 </div>

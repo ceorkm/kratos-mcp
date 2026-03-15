@@ -1,0 +1,21 @@
+{
+  "name": "kratos-memory",
+  "version": "4.0.0",
+  "description": "Ultra-powerful memory system for AI coding tools — auto-captures observations, compresses with Claude, and recalls with FTS5 search. Zero network calls. Fully encrypted.",
+  "author": {
+    "name": "ceorkm",
+    "url": "https://github.com/ceorkm"
+  },
+  "repository": "https://github.com/ceorkm/kratos-mcp",
+  "homepage": "https://github.com/ceorkm/kratos-mcp#readme",
+  "license": "MIT",
+  "keywords": [
+    "memory",
+    "context",
+    "persistence",
+    "auto-capture",
+    "encryption",
+    "pii-detection",
+    "fts5"
+  ]
+}

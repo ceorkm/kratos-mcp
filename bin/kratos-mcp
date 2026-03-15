@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 
-// This is the executable wrapper for kratos-mcp
-// It ensures the MCP server runs correctly when installed globally or via npx
+// Kratos Memory — CLI + MCP Server
+// Mode detection:
+//   - CLI mode: when called with subcommands (save, search, etc.)
+//   - MCP mode: when stdin is piped (no TTY) with no args, or via `kratos mcp`
+// This preserves backward compatibility with existing MCP configurations.
 
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -10,17 +13,16 @@ import { spawn } from 'child_process';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Find the actual index.js file
-const indexPath = join(__dirname, '..', 'dist', 'index.js');
+// Route to the CLI entry point (which handles both CLI and MCP mode detection)
+const cliPath = join(__dirname, '..', 'dist', 'cli', 'index.js');
 
-// Spawn node with the actual server file
-const child = spawn(process.execPath, [indexPath], {
+const child = spawn(process.execPath, [cliPath, ...process.argv.slice(2)], {
   stdio: 'inherit',
-  env: { ...process.env, KRATOS_DEBUG: 'false' }
+  env: { ...process.env }
 });
 
 child.on('error', (err) => {
-  console.error('Failed to start Kratos MCP:', err);
+  console.error('Failed to start Kratos:', err);
   process.exit(1);
 });
 
