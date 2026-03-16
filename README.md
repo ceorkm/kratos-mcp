@@ -15,33 +15,37 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)](https://www.typescriptlang.org/)
 
-**Persistent memory for AI coding agents. CLI-first. Auto-capture. Encrypted. Zero network calls.**
-
-[Installation](#installation) · [Quick Start](#quick-start) · [Commands](#commands) · [Plugin](#plugin-mode) · [Security](#security)
+**Persistent memory for AI coding agents. Encrypted. Local. Zero network calls.**
 
 </div>
 
 ---
 
+> ## Kratos has migrated to a standalone CLI
+>
+> **MCP consumes too many tokens per tool call** (JSON-RPC schema overhead on every interaction). We've migrated to a lightweight CLI that any AI agent can use — Claude Code, Codex, Cursor, Cline, or anything that runs Bash. No protocol overhead, no vendor lock-in.
+>
+> ### Migrate now:
+> ```bash
+> npx kratos-memory
+> ```
+>
+> - **New package**: [`kratos-memory`](https://www.npmjs.com/package/kratos-memory) on npm
+> - **New repo**: [github.com/ceorkm/kratos-cli](https://github.com/ceorkm/kratos-cli)
+> - **Same data**: Run `npx kratos-memory migrate` — your existing memories are already compatible
+> - **Works with any agent**: Not tied to MCP, Claude, or any specific tool
+>
+> The MCP server below continues to work for existing users, but is no longer actively developed. All new features go to `kratos-memory`.
+
+---
+
 ## What is Kratos?
 
-AI coding tools forget everything between sessions. You explain your architecture, your patterns, your decisions — and tomorrow, you explain it all again.
+AI coding tools forget everything between sessions. You explain your architecture, your patterns, your decisions — and next session, you explain it all again.
 
-Kratos gives your AI agent **permanent memory**. It auto-captures what happens during coding sessions and recalls relevant context when you start a new one. No manual work. No setup. Just install and code.
+Kratos gives your AI agent **permanent memory**. Every observation is saved, searchable, and encrypted locally.
 
-```
-Session 1: You build auth with JWT → Kratos remembers
-Session 2: "How does auth work?" → Kratos recalls instantly
-```
-
-## Installation
-
-### Claude Code Plugin (recommended)
-
-```bash
-/plugin marketplace add ceorkm/kratos-mcp
-/plugin install kratos-memory
-```
+## Installation (MCP — Legacy)
 
 That's it. Kratos is now active in **every Claude Code session**. Auto-captures observations, recalls context on session start, compresses summaries with Claude — all automatic.
 
