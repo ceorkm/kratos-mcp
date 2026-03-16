@@ -17,12 +17,6 @@
       {
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "You are a memory compression engine. Given these session observations, produce a 1-3 sentence technical summary preserving file paths, function names, decisions, and key changes. Output ONLY the summary text, nothing else.\n\nObservations:\n$ARGUMENTS",
-            "model": "claude-haiku",
-            "timeout": 15
-          },
-          {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/stop-hook.js\"",
             "timeout": 10
