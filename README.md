@@ -15,7 +15,29 @@
 
 ---
 
-> **Looking for a lighter alternative?** Check out [`kratos-memory`](https://www.npmjs.com/package/kratos-memory) — a CLI-first version that works with any AI agent (Claude Code, Codex, Cursor, Cline) without MCP overhead. Same data format, same `~/.kratos/` storage — just run `npx kratos-memory status`.
+<div align="center">
+
+## Kratos has evolved. This repo is now legacy.
+
+### [`github.com/ceorkm/kratos-cli`](https://github.com/ceorkm/kratos-cli)
+
+**Kratos is now a standalone CLI — faster, lighter, works with ANY AI agent.**
+
+No MCP overhead. No vendor lock-in. Just memory that works.
+
+[![Star the new repo](https://img.shields.io/github/stars/ceorkm/kratos-cli?style=social)](https://github.com/ceorkm/kratos-cli)
+
+```bash
+npx kratos-memory
+```
+
+**Claude Code, Codex, Cursor, Cline** — anything that runs Bash.
+
+Your existing memories work instantly. Same `~/.kratos/` storage, same SQLite format.
+
+### [`Go to Kratos CLI >`](https://github.com/ceorkm/kratos-cli)
+
+</div>
 
 ---
 
