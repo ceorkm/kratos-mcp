@@ -32,7 +32,7 @@
 >
 > - **New package**: [`kratos-memory`](https://www.npmjs.com/package/kratos-memory) on npm
 > - **New repo**: [github.com/ceorkm/kratos-cli](https://github.com/ceorkm/kratos-cli)
-> - **Same data**: Run `npx kratos-memory migrate` — your existing memories are already compatible
+> - **Same data**: Your existing memories work instantly — same `~/.kratos/` storage, same SQLite format. Just run `npx kratos-memory status` to see them.
 > - **Works with any agent**: Not tied to MCP, Claude, or any specific tool
 >
 > The MCP server below continues to work for existing users, but is no longer actively developed. All new features go to `kratos-memory`.
@@ -116,7 +116,6 @@ kratos status
 | `kratos status` | System dashboard |
 | `kratos switch <path>` | Switch project |
 | `kratos scan <text>` | Detect PII/secrets (`--redact`) |
-| `kratos migrate` | Verify existing data for CLI use |
 | `kratos hooks install` | Install auto-capture hooks for Claude Code |
 | `kratos hooks uninstall` | Remove hooks |
 
@@ -247,7 +246,7 @@ Or in your MCP client config:
 }
 ```
 
-Existing MCP users: run `kratos migrate` to verify your data works with the CLI. No data copy needed — same database format.
+Existing MCP users: your data already works with the CLI. Same `~/.kratos/` storage, same database format. Just run `npx kratos-memory status`.
 
 ## Contributing
 
