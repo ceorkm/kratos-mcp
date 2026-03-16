@@ -41,6 +41,7 @@ export class MemoryDatabase {
   private db: Database.Database;
   private projectId: string;
   private projectRoot: string;
+
   constructor(projectRoot: string, projectId: string) {
     this.projectRoot = projectRoot;
     this.projectId = projectId;
@@ -182,7 +183,7 @@ export class MemoryDatabase {
     );
 
     logger.info(`Memory saved: ${id} - ${params.summary}`);
-
+    
     // Return the complete memory object
     const memory: Memory = {
       id,

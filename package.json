@@ -1,8 +1,8 @@
 {
   "name": "kratos-mcp",
   "version": "4.1.1",
-  "description": "Ultra-powerful memory system for AI coding tools — CLI-first with MCP compatibility, auto-capture hooks, AI compression, and semantic search",
-  "main": "dist/cli/index.js",
+  "description": "Ultra-Lean Memory System for AI Coding Tools - MCP server with 64% smaller context footprint",
+  "main": "dist/index.js",
   "type": "module",
   "bin": {
     "kratos-mcp": "./bin/kratos-mcp",
@@ -18,11 +18,9 @@
   },
   "scripts": {
     "build": "tsc",
-    "build:middleware": "tsc",
+        "build:middleware": "tsc",
     "build:all": "npm run build",
-    "cli": "tsx src/cli/index.ts",
-    "dev": "tsx watch src/cli/index.ts",
-    "dev:mcp": "tsx watch src/index.ts",
+    "dev": "tsx watch src/index.ts",
     "dev:middleware": "tsx watch src/host-middleware-v2.ts",
     "start": "node dist/index.js",
     "start:production": "node dist/host-middleware-v2.js dist/index.js",
@@ -43,18 +41,16 @@
     "prepublishOnly": "npm run build:all"
   },
   "keywords": [
-    "cli",
     "mcp",
-    "ai-memory",
     "ai-development",
     "context-management",
-    "claude-code",
+    "prompt-engineering",
     "sqlite",
     "full-text-search",
     "memory-management",
-    "auto-capture",
-    "ai-compression",
-    "semantic-search"
+    "concept-store",
+    "auto-save",
+    "leak-protection"
   ],
   "author": "",
   "license": "MIT",
@@ -62,7 +58,6 @@
     "@modelcontextprotocol/sdk": "^1.0.0",
     "better-sqlite3": "^9.2.2",
     "chalk": "^5.3.0",
-    "commander": "^12.1.0",
     "crypto-js": "^4.2.0",
     "fs-extra": "^11.2.0",
     "js-yaml": "^4.1.0",
