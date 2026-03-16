@@ -1,6 +1,6 @@
 {
   "name": "kratos-mcp",
-  "version": "4.0.0",
+  "version": "4.1.1",
   "description": "Ultra-powerful memory system for AI coding tools — CLI-first with MCP compatibility, auto-capture hooks, AI compression, and semantic search",
   "main": "dist/cli/index.js",
   "type": "module",

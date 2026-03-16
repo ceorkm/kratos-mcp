@@ -1,31 +1,13 @@
 #!/usr/bin/env node
 
 // Kratos Memory — CLI + MCP Server
-// Mode detection:
-//   - CLI mode: when called with subcommands (save, search, etc.)
-//   - MCP mode: when stdin is piped (no TTY) with no args, or via `kratos mcp`
-// This preserves backward compatibility with existing MCP configurations.
+// Direct import instead of spawn to preserve TTY detection.
 
 import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { spawn } from 'child_process';
+import { dirname, join, resolve } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const cliPath = resolve(join(__dirname, '..', 'dist', 'cli', 'index.js'));
 
-// Route to the CLI entry point (which handles both CLI and MCP mode detection)
-const cliPath = join(__dirname, '..', 'dist', 'cli', 'index.js');
-
-const child = spawn(process.execPath, [cliPath, ...process.argv.slice(2)], {
-  stdio: 'inherit',
-  env: { ...process.env }
-});
-
-child.on('error', (err) => {
-  console.error('Failed to start Kratos:', err);
-  process.exit(1);
-});
-
-child.on('exit', (code) => {
-  process.exit(code || 0);
-});
+await import(cliPath);
