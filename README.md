@@ -36,11 +36,22 @@ Session 2: "How does auth work?" → Kratos recalls instantly
 
 ## Installation
 
+### Claude Code Plugin (recommended)
+
 ```bash
-npm install -g kratos-mcp
+/plugin marketplace add ceorkm/kratos-mcp
+/plugin install kratos-memory
 ```
 
-That's it. Kratos auto-detects your project from `.git`, `package.json`, `Cargo.toml`, `go.mod`, or `pyproject.toml`.
+That's it. Kratos is now active in **every Claude Code session**. Auto-captures observations, recalls context on session start, compresses summaries with Claude — all automatic.
+
+### CLI (standalone)
+
+```bash
+npx kratos-mcp
+```
+
+Works with any AI coding tool that can run shell commands. Auto-detects your project from `.git`, `package.json`, `Cargo.toml`, `go.mod`, or `pyproject.toml`.
 
 ## Quick Start
 
@@ -112,8 +123,11 @@ Kratos works as a **Claude Code plugin** for fully automatic memory capture. No 
 ### Install as Plugin
 
 ```bash
-claude --plugin-dir ./plugin
+/plugin marketplace add ceorkm/kratos-mcp
+/plugin install kratos-memory
 ```
+
+Installed to **user scope** by default — active in every Claude Code session, every project.
 
 ### What Happens Automatically
 

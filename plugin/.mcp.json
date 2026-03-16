@@ -2,8 +2,8 @@
   "mcpServers": {
     "kratos-memory": {
       "type": "stdio",
-      "command": "kratos",
-      "args": ["mcp"]
+      "command": "npx",
+      "args": ["kratos-mcp", "mcp"]
     }
   }
 }

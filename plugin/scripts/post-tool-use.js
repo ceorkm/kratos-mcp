@@ -56,7 +56,7 @@ async function main() {
     const args = ['save', summary, '--tags', tags, '--importance', '2'];
     if (paths) args.push('--paths', paths);
 
-    execFileSync('kratos', args, {
+    execFileSync('npx', ['kratos-mcp', ...args], {
       timeout: 5000,
       stdio: ['pipe', 'pipe', 'pipe'],
     });

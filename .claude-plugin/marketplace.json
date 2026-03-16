@@ -1,0 +1,21 @@
+{
+  "name": "ceorkm",
+  "owner": {
+    "name": "ceorkm"
+  },
+  "metadata": {
+    "description": "Kratos Memory — persistent memory system for AI coding tools",
+    "homepage": "https://github.com/ceorkm/kratos-mcp"
+  },
+  "plugins": [
+    {
+      "name": "kratos-memory",
+      "version": "4.1.1",
+      "source": "./plugin",
+      "description": "Persistent memory for AI coding agents. Auto-captures observations, compresses with Claude, recalls context instantly. Encrypted, local, zero network calls.",
+      "author": {
+        "name": "ceorkm"
+      }
+    }
+  ]
+}

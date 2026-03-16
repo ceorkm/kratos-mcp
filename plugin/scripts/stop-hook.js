@@ -81,7 +81,7 @@ async function main() {
       args.push('--paths', uniqueFiles.join(','));
     }
 
-    execFileSync('kratos', args, {
+    execFileSync('npx', ['kratos-mcp', ...args], {
       timeout: 5000,
       stdio: ['pipe', 'pipe', 'pipe'],
     });

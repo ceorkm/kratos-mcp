@@ -21,7 +21,7 @@ async function main() {
 
   // Fetch recent memories via CLI
   try {
-    const output = execFileSync('kratos', ['recent', '--limit', '5'], {
+    const output = execFileSync('npx', ['kratos-mcp', 'recent', '--limit', '5'], {
       timeout: 5000,
       encoding: 'utf-8',
       stdio: ['pipe', 'pipe', 'pipe'],
